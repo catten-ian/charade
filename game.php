@@ -17,13 +17,14 @@
     <img src="./start4.svg" style="position:fixed;float:right;right:0vw;top:0vh">
     <img src="./start5.svg" style="position: absolute; bottom: 0px; right: 0px;">
     <img src="./start3.png" style="position: absolute; bottom: 0px; left: 0px;">
+    <img src="./start6.svg" style="transform: translateX(50%);transition: transform 0.1s linear 2s;">
 
     <script>
         var timeObj=new Date();
         var startTimeInMs=timeObj.getTime();
         var timeCur;
         var Count1=0;
-        var window_width=window.innerWidth;
+        var window_width=window.innerWidth;        
         timer1=setInterval(checkUserCount,1000);    
         <?php 
             $username=$_SESSION['username'];

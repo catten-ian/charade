@@ -64,21 +64,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Charades!</title>
     <link rel="stylesheet" href="styles2.css">
+    <style type="text/css">
+        @font_face {
+            font-family:"SourceHanSans-Medium";
+            src: url('./SourceHanSans-Medium.ttc') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+    </style>
 </head>
 
 <body bgcolor="#1270F8">
-    <img src="./choose1.svg" height="100%" style="position:fixed;z-index:-1;filter:brightness(50%)">
-    <img src="./choose2svg" style="position:fixed;float:left;left:0vw;top:0vh;">
+    <img src="./choose1.svg" height="100%" style="position:fixed;z-index:-1;">
+    <img src="./choose2.svg" style="position:fixed;float:left;left:0vw;top:0vh;">
     <!-- <?php echo $word1. " 和 ". $word2;?> -->
 
-    <div style="position:fixed;top:10%;left:5%;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word1;?> </div>
-    <div style="position:fixed;top:10%;left:5%;font-size: 80pt;font-family:'title.ttf';font-color:white;z-index:2;" onclick="userClick('<?php echo $word1;?>');" ><?php echo $word1;?> </div>
+    <div style="position:fixed;top:10%;left:5%;-webkit-text-stroke:calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word1;?> </div>
+    <div style="position:fixed;top:10%;left:5%;font-size: 80pt;font-family:"SourceHanSans-Medium";font-color:white;z-index:2;" onclick="userClick('<?php echo $word1;?>');" ><?php echo $word1;?> </div>
     <div style="position:fixed;top:10%;right:10%;align:right;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word2;?> </div>
-    <div style="position:fixed;top:10%;right:10%;align:right;font-size: 80pt;font-family:'title.ttf';font-color:white;z-index:2;" onclick="userClick('<?php echo $word2;?>');"><?php echo $word2;?> </div>
+    <div style="position:fixed;top:10%;right:10%;align:right;font-size: 80pt;font-family:"SourceHanSans-Medium";font-color:white;z-index:2;" onclick="userClick('<?php echo $word2;?>');"><?php echo $word2;?> </div>
     <div style="position:fixed;bottom:10%;right:10%;align:right;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word3;?> </div>
-    <div style="position:fixed;bottom:10%;right:10%;align:right;font-size: 80pt;font-family:'title.ttf';font-color:white;z-index:2;" onclick="userClick('<?php echo $word3;?>');"><?php echo $word3;?> </div>
+    <div style="position:fixed;bottom:10%;right:10%;align:right;font-size: 80pt;font-family:"SourceHanSans-Medium";font-color:white;z-index:2;" onclick="userClick('<?php echo $word3;?>');"><?php echo $word3;?> </div>
     <div style="position:fixed;bottom:10%;left:5%;align:right;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word4;?> </div>
-    <div style="position:fixed;bottom:10%;left:5%;align:left;font-size: 80pt;font-family:'title.ttf';font-color:white;z-index:2;" onclick="userClick('<?php echo $word4;?>');"><?php echo $word4;?> </div>
+    <div style="position:fixed;bottom:10%;left:5%;align:left;font-size: 80pt;font-family:"SourceHanSans-Medium";font-color:white;z-index:2;" onclick="userClick('<?php echo $word4;?>');"><?php echo $word4;?> </div>
+
+    <img src="./start6.svg" style="transform: translateX(90%);transition: transform 4s linear 0.1s;">
 
     <script>
         var timeObj=new Date();
