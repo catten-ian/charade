@@ -70,22 +70,15 @@
     <img src="./choose1.svg" height="100%" style="position:fixed;z-index:-1;filter:brightness(50%)">
     <img src="./choose2svg" style="position:fixed;float:left;left:0vw;top:0vh;">
     <!-- <?php echo $word1. " 和 ". $word2;?> -->
-    <span style="font-size: 80pt;font-family:'title.ttf';font-color:white;">
-        <table>
-            <tr><td>
-                <?php echo $word1;?> 
-            </td></tr>
-            <tr><td>
-                <?php echo $word2;?> 
-            </td></tr>
-            <tr><td>
-                <?php echo $word3;?> 
-            </td></tr>
-            <tr><td>
-                <?php echo $word4;?> 
-            </td></tr>
-        </table>
-    </span>
+
+    <div style="position:fixed;top:10%;left:5%;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word1;?> </div>
+    <div style="position:fixed;top:10%;left:5%;font-size: 80pt;font-family:'title.ttf';font-color:white;z-index:2;" onclick="userClick('<?php echo $word1;?>');" ><?php echo $word1;?> </div>
+    <div style="position:fixed;top:10%;right:10%;align:right;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word2;?> </div>
+    <div style="position:fixed;top:10%;right:10%;align:right;font-size: 80pt;font-family:'title.ttf';font-color:white;z-index:2;" onclick="userClick('<?php echo $word2;?>');"><?php echo $word2;?> </div>
+    <div style="position:fixed;bottom:10%;right:10%;align:right;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word3;?> </div>
+    <div style="position:fixed;bottom:10%;right:10%;align:right;font-size: 80pt;font-family:'title.ttf';font-color:white;z-index:2;" onclick="userClick('<?php echo $word3;?>');"><?php echo $word3;?> </div>
+    <div style="position:fixed;bottom:10%;left:5%;align:right;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word4;?> </div>
+    <div style="position:fixed;bottom:10%;left:5%;align:left;font-size: 80pt;font-family:'title.ttf';font-color:white;z-index:2;" onclick="userClick('<?php echo $word4;?>');"><?php echo $word4;?> </div>
 
     <script>
         var timeObj=new Date();
@@ -93,7 +86,7 @@
         var timeCur;
         var Count1=0;
         var window_width=window.innerWidth;
-        timer1=setInterval(checkUserCount,1000);    
+        // timer1=setInterval(checkUserCount,1000);    
         <?php 
             $username=$_SESSION['username'];
             $user_id = $_SESSION['user_id'];
@@ -108,8 +101,10 @@
             print("var rival_id = $rival_id;\n");
             print("var first_user_id = $first_user_id;\n");
         ?>
-        function checkUserCount()
+       
+        function userClick(theWord)
         {
+            alert(theWord);
         }
     </script>
 </body>
