@@ -1,0 +1,28 @@
+@font-face {
+    font-family: 'JiangXiZuoHei';
+    src: url('./username.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Reset default margin and padding */
+body, html {
+    margin: 0;
+    padding: 0;
+}
+
+/* 设置 body 的背景图像 */
+body {
+    /* background-image: url('./roomexampleback.SVG'); /* 替换为你的图像路径 */
+    background-repeat: no-repeat; /* 不重复背景图像 */
+    background-size: cover; /* 背景图像填充整个页面 */
+    background-position: center; /* 中心位置 */
+    background-attachment: fixed; /* 背景图像固定，不随内容滚动 */
+    margin: 0; /* 移除默认边距 */
+    padding: 0; /* 移除默认内边距 */
+    height: 100vh; /* 让 body 高度占满整个视口 */
+    width: 100vw; /* 让 body 宽度占满整个视口 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

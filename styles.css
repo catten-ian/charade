@@ -1,0 +1,127 @@
+@font-face {
+    font-family: 'JiangXiZuoHei';
+    src: url('./title.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Reset default margin and padding */
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* 按钮样式 */
+.button {
+    position: fixed; /* 固定定位 */
+    /* transform:translate(0%,180%); */
+    top: 63vh;
+    height: 10vh; /* 设置图片宽度 */
+    /* transform: translate(-50%, -50%); 居中定位 */
+    z-index: 3; /* 确保按钮在最上层 */
+    border: none; /* 无边框 */
+    background: none; /* 无背景 */
+    cursor: pointer; /* 鼠标悬停时显示指针 */
+    transition: transform 0.3s; /* 平滑过渡效果 */
+}
+
+/* 按钮按压效果 */
+.button:active {
+    position: fixed; /* 或 absolute; 取决于上下文 */
+    /* top: 20vh; /* 向上移动20像素 */
+    /*left: -20vh;*/
+    /* transform: scale(0.95); /* 按压时缩小 */    
+}
+
+/* 按钮图片样式 */
+.button img {
+    position: fixed; /* 或 absolute; 取决于上下文 */
+    /* width: 24vw; 设置图片宽度 */
+    /* top: 30vh; 向上移动20像素 */
+    /* left: -20vw; */
+    /* height: auto; 高度自适应 */
+    transition: opacity 0.5s; /* 图片透明度渐变 */
+}
+
+/* 点击按钮时的渐变效果 */
+#topButton:active + img {
+    opacity: 0.7; /* 按压时图片变暗 */
+}
+
+.overlay {
+    position: fixed; /* 或 absolute; 取决于上下文 */
+    z-index: 1; /* Ensure the overlay is on top */
+    background-color: rgba(0, 0, 0, 0); /* Semi-transparent black overlay */
+    display: flex;
+}
+
+/* Style for the image within the overlay */
+.overlay img {
+    position:fixed;
+    height: 83%; /* Ensure image does not exceed viewport height */
+    display: block;
+    transform:translate(-50%,-60%);
+    /*margin: 10 /* Center the image horizontally */
+}
+
+/* 设置 body 的背景图像 */
+body {
+    background-image: url('./loginback1.svg'); /* 替换为你的图像路径 */
+    background-repeat: no-repeat; /* 不重复背景图像 */
+    background-size: cover; /* 背景图像填充整个页面 */
+    background-position: center; /* 中心位置 */
+    background-attachment: fixed; /* 背景图像固定，不随内容滚动 */
+    margin: 0; /* 移除默认边距 */
+    padding: 0; /* 移除默认内边距 */
+    height: 100vh; /* 让 body 高度占满整个视口 */
+    width: 100vw; /* 让 body 宽度占满整个视口 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 容器样式 */
+.container {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80%; /* 确保有足够的宽度显示文字 */
+    max-width: 800px; /* 最大宽度 */
+    box-sizing: border-box;
+}
+
+.input-text, .synced-text {
+    font-family: 'JiangXiZuoHei', sans-serif;
+    font-size: calc(5vw + 5vh); /* 使用视口宽度和高度的百分比 */
+    text-align: center;
+    position: fixed;
+    top: 43vh; /* 垂直居中 */
+    left: 0; /* 水平居中 */
+    width: 100%; /* 使宽度为容器宽度 */
+}
+
+.input-text {
+    color: rgb(0, 0, 0);
+    background: rgba(0, 0, 0, 0); /* 透明背景 */
+    border: none;
+    width: 100%; /* 使宽度为容器宽度 */
+    /* border-radius: 5px;
+    padding: 10px; */
+    outline: none;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* 水平偏移 1px，垂直偏移 1px，模糊半径 2px，黑色阴影 */
+    z-index: 2;
+}
+
+.input-text::placeholder {
+    color: rgba(0, 0, 0, 0.6); /* 占位符颜色 */
+}
+
+.synced-text {
+    color: #F5E33F;
+    z-index: 0;
+    -webkit-text-stroke: calc(2vw + 2vh) #F5E33F; /* 描边大小和颜色 */
+    /*text-stroke: calc(2vw + 2vh) #F5E33F;  标准属性，兼容性较好 */
+    pointer-events: none; /* 使下层文字不可点击 */
+}
