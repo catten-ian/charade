@@ -13,12 +13,13 @@
     
     mysqli_set_charset($conn,"utf8");
     
-    // 获取房间名称和用户名
+    // 获取房间名称和用户标识符
     $room = isset($_POST['room']) ? $_POST['room'] : '';
     $username = isset($_POST['username']) ? $_POST['username'] : '';
-    
+    $user_id = isset($_POST['user_id']) ? $_POST['user_id'] : '';
+
     // 检查参数是否有效
-    if (empty($room) || empty($username)) {
+    if (empty($room) || (empty($username) && empty($user_id))) {
         echo json_encode(array('success' => false, 'error' => 'Invalid parameters'));
         exit;
     }
@@ -26,15 +27,32 @@
     try {
         // 1. 获取当前用户ID
         $currentUserId = null;
-        $sql = "SELECT id FROM tb_users WHERE username = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
-            $currentUserId = $row['id'];
+        
+        // 优先使用user_id获取用户
+        if (!empty($user_id)) {
+            $sql = "SELECT id FROM tb_users WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $user_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $currentUserId = $row['id'];
+            }
+            $stmt->close();
         }
-        $stmt->close();
+        
+        // 如果通过user_id没有找到用户，或者没有提供user_id，则使用username
+        if (!$currentUserId && !empty($username)) {
+            $sql = "SELECT id FROM tb_users WHERE username = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $currentUserId = $row['id'];
+            }
+            $stmt->close();
+        }
         
         if (!$currentUserId) {
             echo json_encode(array('success' => false, 'error' => 'Current user not found'));

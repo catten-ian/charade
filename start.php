@@ -91,7 +91,7 @@
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/charade/heartbeat.php', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send(`username=${encodeURIComponent(username)}&is_online=1&is_active=1&page_type=start`);
+            xhr.send(`user_id=${user_id}&is_online=1&is_active=1&page_type=start`);
         }
         
         // 页面关闭时将用户状态更新为5
@@ -99,7 +99,7 @@
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/charade/heartbeat.php', false); // 同步请求
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send(`username=${encodeURIComponent(username)}&is_online=0&page_type=start`);
+            xhr.send(`user_id=${user_id}&is_online=0&page_type=start`);
         });
         
         function checkUserCount()

@@ -1,6 +1,9 @@
 <?php
 include "log.php";
-session_start();
+// 会话开始
+if (!session_id()) {
+    session_start();
+}
 
 // 定义需要记录日志的用户ID
 $log_user_ids = [8, 13];
@@ -10,9 +13,6 @@ function shouldLog($user_id) {
     global $log_user_ids;
     return in_array($user_id, $log_user_ids);
 }
-$_SESSION['username'] = $_POST['username'];
-Logger::debug("username data:", $_POST['username']);
-// 先不记录，等获取到用户ID后再判断是否记录
 
 include "../config.inc";
 $conn = mysqli_connect("localhost", $db_user, $db_password, $db_name, $db_port);
@@ -25,36 +25,66 @@ if (mysqli_connect_errno()) {
     // 暂时不记录连接成功日志，等获取用户ID后再判断
     header('Content-Type: application/json');
     mysqli_set_charset($conn, "utf8");
-    $username = $_SESSION['username'];
-    // 暂时不记录开始匹配流程日志，等获取用户ID后再判断
     
-    // 防止SQL注入
-$username = mysqli_real_escape_string($conn, $username);
-
-
-
-// 获取或创建用户
-$sql_select = "SELECT id,name FROM tb_user WHERE name='$username'";
-$ret = mysqli_query($conn, $sql_select);
-$cnt = mysqli_num_rows($ret);
-$user_id = 0;
-
-if ($cnt < 1) {
-    // 暂时不记录创建新用户日志，等获取用户ID后再判断
-    $sql_insert = "insert into tb_user(name, in_room) values('$username', 0)"; // 新增用户时默认不在房间
-    if (mysqli_query($conn, $sql_insert)) {
-        // 暂时不记录创建成功日志，等获取用户ID后再判断
-    } else {
-        // 暂时不记录创建失败日志，等获取用户ID后再判断
+    // 优先使用user_id，如果没有则使用username
+    $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+    $username = '';
+    $cnt = 0;
+    
+    if ($user_id) {
+        // 通过user_id获取username
+        $stmt = mysqli_prepare($conn, "SELECT name FROM tb_user WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'i', $user_id);
+        mysqli_stmt_execute($stmt);
+        $ret = mysqli_stmt_get_result($stmt);
+        $cnt = mysqli_num_rows($ret);
+        
+        if ($cnt >= 1) {
+            $row = mysqli_fetch_row($ret);
+            $username = $row[0];
+        }
+        mysqli_stmt_close($stmt);
+    } else if (isset($_POST['username'])) {
+        // 兼容旧的username方式
+        $username = $_POST['username'];
+        Logger::debug("username data:", $username);
+        
+        // 防止SQL注入
+        $stmt = mysqli_prepare($conn, "SELECT id,name FROM tb_user WHERE name = ?");
+        mysqli_stmt_bind_param($stmt, 's', $username);
+        mysqli_stmt_execute($stmt);
+        $ret = mysqli_stmt_get_result($stmt);
+        $cnt = mysqli_num_rows($ret);
+        $user_id = 0;
+        
+        if ($cnt < 1) {
+            // 创建新用户
+            $stmt_insert = mysqli_prepare($conn, "INSERT INTO tb_user(name, in_room) VALUES(?, 0)");
+            mysqli_stmt_bind_param($stmt_insert, 's', $username);
+            if (mysqli_stmt_execute($stmt_insert)) {
+                // 创建成功后再次查询
+                $stmt_select = mysqli_prepare($conn, "SELECT id,name FROM tb_user WHERE name = ?");
+                mysqli_stmt_bind_param($stmt_select, 's', $username);
+                mysqli_stmt_execute($stmt_select);
+                $ret = mysqli_stmt_get_result($stmt_select);
+                $cnt = mysqli_num_rows($ret);
+                mysqli_stmt_close($stmt_select);
+            }
+            mysqli_stmt_close($stmt_insert);
+        }
+        
+        if ($cnt >= 1) {
+            $row = mysqli_fetch_row($ret);
+            $user_id = $row[0];
+        }
+        mysqli_stmt_close($stmt);
     }
-    $ret = mysqli_query($conn, $sql_select);
-} else {
-    // 暂时不记录用户已存在日志，等获取用户ID后再判断
-}
     
-    $row = mysqli_fetch_row($ret);
-$_SESSION['user_id'] = $row[0];
-$user_id = $row[0];
+    // 设置会话信息
+    if ($user_id && $username) {
+        $_SESSION['user_id'] = $user_id;
+        $_SESSION['username'] = $username;
+    }
 // 现在有了用户ID，可以判断是否需要记录日志
 if (shouldLog($user_id)) {
     Logger::info("进入匹配页面", ["username" => $_SESSION['username'], "user_id" => $user_id]);

@@ -13,12 +13,13 @@
     
     mysqli_set_charset($conn,"utf8");
     
-    // 获取房间名称和用户名
+    // 获取房间名称和用户标识符
     $room = isset($_POST['room']) ? $_POST['room'] : '';
     $username = isset($_POST['username']) ? $_POST['username'] : '';
-    
+    $user_id = isset($_POST['user_id']) ? $_POST['user_id'] : '';
+
     // 检查参数是否有效
-    if (empty($room) || empty($username)) {
+    if (empty($room) || (empty($username) && empty($user_id))) {
         echo json_encode(array('allReady' => true));
         exit;
     }

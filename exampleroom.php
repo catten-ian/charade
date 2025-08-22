@@ -193,7 +193,9 @@
         var window_width=window.innerWidth;
         <?php 
             $username=$_SESSION['username'];
+            $user_id = $_SESSION['user_id'];
             print("var username='$username';\n") ;
+            print("var user_id='$user_id';\n") ;
         ?>
         var response={"ret_code":4};
         function encodeFormDataToUrlParams(formData) {
@@ -209,7 +211,7 @@
             xhr.open('POST', '/charade/paring.php');
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             var fmData=new FormData();
-            fmData.append('username',username);
+            fmData.append('user_id',user_id);
             xhr.send(encodeFormDataToUrlParams(fmData));
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {                    
@@ -234,6 +236,18 @@
                         fUserId.name = 'user_id';
                         fUserId.value = response.user_id;
                         form.appendChild(fUserId);
+
+                        var fRivalId = document.createElement('input');
+                        fRivalId.type = 'hidden';
+                        fRivalId.name = 'rival';
+                        fRivalId.value = response.rival_id;
+                        form.appendChild(fRivalId);
+
+                        var fFirstUserId = document.createElement('input');
+                        fFirstUserId.type = 'hidden';
+                        fFirstUserId.name = 'first_user_id';
+                        fFirstUserId.value = response.first_user_id;
+                        form.appendChild(fFirstUserId);
 
                         var fRoom = document.createElement('input');
                         fRoom.type = 'hidden';

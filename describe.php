@@ -184,7 +184,7 @@
                     }
                 }
             };
-            xhr.send('room=' + encodeURIComponent(room) + '&username=' + encodeURIComponent(username));
+            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + user_id);
         }
         
         // 每2秒检查一次猜测者状态

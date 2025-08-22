@@ -100,6 +100,7 @@
         <input type="hidden" id="selectedWord" name="word">
         <input type="hidden" id="selectedWordFinal" name="word_final">
         <input type="hidden" name="username" value="<?php echo $username; ?>">
+        <input type="hidden" name="user_id" value="<?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : ''; ?>">
     </form>
 
     <!-- <img src="./example4.png" style="left:0px;top:0px;z-index:-1;filter:brightness(50%);width:100vw;height:100vh;overflow:hidden;"> -->
@@ -226,7 +227,7 @@
                     callback(response.allReady);
                 }
             };
-            xhr.send('room=' + encodeURIComponent(room) + '&username=' + encodeURIComponent(username));
+            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + user_id);
         }
         
         // 处理未响应的猜测者
@@ -234,7 +235,7 @@
             var xhr = new XMLHttpRequest();
             xhr.open('POST', 'kick_unresponsive_guessers.php', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send('room=' + encodeURIComponent(room) + '&username=' + encodeURIComponent(username));
+            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + user_id);
         }
         
         // 页面加载时启动计时器
