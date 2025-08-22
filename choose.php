@@ -53,100 +53,59 @@
     $result = mysqli_query($conn,$sql);
     $row = mysqli_fetch_array($result);
     $word4 = $row[0];
-    // echo "随机选择的两个词是：" . $word1 . " 和 " . $word2;
 
     mysqli_close($conn);
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Charades!</title>
-    <link rel="stylesheet" href="styles2.css">
-    <style type="text/css">
-        @font-face {
-            font-family:"SourceHanSans-Medium";
-            src: url('./SourceHanSans-Medium.ttc') format('truetype');
-            font-weight: normal;
-            font-style: normal;
+    <style>
+        body{
+            @font-face {
+                font-family: 'JiangXiZuoHei';
+                src: url('./title.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
         }
     </style>
+    <title>Choose A Word</title>
+
+    
 </head>
+<body bgcolor="#1270F8" style="overflow:hidden;">
+    <form id="wordForm" action="describe.php" method="post">
+        <input type="hidden" id="selectedWord" name="word">
+    </form>
 
-<body bgcolor="#1270F8">
-    <img src="./choose1.svg" height="100%" style="position:fixed;z-index:-1;">
-    <img src="./choose2.svg" style="position:fixed;float:left;left:0vw;top:0vh;">
-    <!-- <?php echo $word1. " 和 ". $word2;?> -->
+    <!-- <img src="./example4.png" style="left:0px;top:0px;z-index:-1;filter:brightness(50%);width:100vw;height:100vh;overflow:hidden;"> -->
+    <!-- 四个角落的图片 -->
+    <img src="./Choose3.svg"  style="position:absolute;left:62vw;top:0vh;overflow:hidden; width:38%;height:39%;z-index:0;opacity: 1;" /> <!-- topright -->
+    <img src="./Choose4.svg"  style="position:absolute;left:0vw;top:56vh;overflow:hidden; width:46%;z-index:0;opacity: 1;" /> <!-- downleft -->
+    <img src="./Choose2.svg"  style="position:absolute;left:2.5vw;top:-6.8vh;overflow:hidden;width:38%; z-index:0;filter: invert(100%);" /><!-- topleft-->
+    <img src="./Choose1.svg"  style="position:absolute;left:71.8vw;top:70.8vh;width:28%;overflow:hidden;z-index:0;opacity: 1;" />  <!-- downright -->
+    
+    <div onclick="document.getElementById('selectedWord').value='<?php echo $word1; ?>'; document.getElementById('wordForm').submit();" style="position:absolute;left:23vw;top:25vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
+        <img src="./choose5.svg" style="position:absolute;height:26vh;width:23vw;"/> 
+        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $word1; ?></p>
+    </div>
 
-    <div style="position:fixed;top:10%;left:5%;-webkit-text-stroke:calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word1;?> </div>
-    <div style="position:fixed;top:10%;left:5%;font-size: 80pt;font-family:"SourceHanSans-Medium";font-color:white;z-index:2;" onclick="userClick('<?php echo $word1;?>');" ><?php echo $word1;?> </div>
-    <div style="position:fixed;top:10%;right:10%;align:right;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word2;?> </div>
-    <div style="position:fixed;top:10%;right:10%;align:right;font-size: 80pt;font-family:"SourceHanSans-Medium";font-color:white;z-index:2;" onclick="userClick('<?php echo $word2;?>');"><?php echo $word2;?> </div>
-    <div style="position:fixed;bottom:10%;right:10%;align:right;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word3;?> </div>
-    <div style="position:fixed;bottom:10%;right:10%;align:right;font-size: 80pt;font-family:"SourceHanSans-Medium";font-color:white;z-index:2;" onclick="userClick('<?php echo $word3;?>');"><?php echo $word3;?> </div>
-    <div style="position:fixed;bottom:10%;left:5%;align:right;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word4;?> </div>
-    <div style="position:fixed;bottom:10%;left:5%;align:left;font-size: 80pt;font-family:"SourceHanSans-Medium";font-color:white;z-index:2;" onclick="userClick('<?php echo $word4;?>');"><?php echo $word4;?> </div>
+    <div onclick="document.getElementById('selectedWord').value='<?php echo $word2; ?>'; document.getElementById('wordForm').submit();" style="position:absolute;left:56vw;top:25vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
+        <img src="./choose5.svg" style="position:absolute;height:26vh;width:23vw;"/> 
+        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $word2; ?></p>
+    </div>
 
-    <img id="movie1"src="./start6.svg" style="transform: translateX(0);transition: transform 0.1s linear 2s;">
+    <div onclick="document.getElementById('selectedWord').value='<?php echo $word3; ?>'; document.getElementById('wordForm').submit();" style="position:absolute;left:23vw;top:54vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
+        <img src="./choose5.svg" style="position:absolute;height:26vh;width:23vw;"/> 
+        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $word3; ?></p>
+    </div>
 
-
-    <script>
-        var timeObj=new Date();
-        var startTimeInMs=timeObj.getTime();
-        var timeCur;
-        var Count1=0;
-        var window_width=window.innerWidth;
-        document.getElementById("movie1").style.transform="translateX(100vw)";
-        // timer1=setInterval(checkUserCount,1000);    
-        <?php 
-            $username=$_SESSION['username'];
-            $user_id = $_SESSION['user_id'];
-            $room = $_SESSION['room'];
-            $rival = $_SESSION['rival'];
-            $rival_id = $_SESSION['rival_id'];
-            $first_user_id = $_SESSION['first_user_id'];
-            print("var username='$username';\n");
-            print("var user_id=$user_id;\n");
-            print("var room = '$room';\n");
-            print("var rival = '$rival';\n");
-            print("var rival_id = $rival_id;\n");
-            print("var first_user_id = $first_user_id;\n");
-        ?>
-       
-        function userClick(theWord)
-        {
-            console.log('选择的词语:', theWord);
-            
-            // 创建表单并提交到describe.php页面
-            var form = document.createElement('form');
-            form.method = 'post';
-            form.action = 'describe.php';
-            
-            // 添加表单字段
-            var fields = [
-                {name: 'username', value: username},
-                {name: 'user_id', value: user_id},
-                {name: 'room', value: room},
-                {name: 'rival', value: rival},
-                {name: 'rival_id', value: rival_id},
-                {name: 'first_user_id', value: first_user_id},
-                {name: 'role', value: 'describer'},
-                {name: 'selected_word', value: theWord}
-            ];
-            
-            // 创建并添加所有隐藏字段
-            fields.forEach(function(field) {
-                var input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = field.name;
-                input.value = field.value;
-                form.appendChild(input);
-            });
-            
-            document.body.appendChild(form);
-            form.submit();
-        }
-    </script>
+    <div onclick="document.getElementById('selectedWord').value='<?php echo $word4; ?>'; document.getElementById('wordForm').submit();" style="position:absolute;left:56vw;top:54vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
+        <img src="./choose5.svg" style="position:absolute;height:26vh;width:23vw;"/> 
+        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $word4; ?></p>
+    </div>
 </body>
 </html>
+    

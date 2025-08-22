@@ -234,12 +234,9 @@
                 role = firstUserIsDescriber ? 'guesser' : 'describer';
             }
             
-            // 根据角色设置游戏URL
-            if (role === 'guesser') {
-                gameUrl = 'waiting.php'; // guesser进入waiting
-            } else {
-                gameUrl = 'choose.php'; // describer进入choose
-            }
+            // 所有角色都先跳转到start.php
+            gameUrl = 'start.php'; // 先跳转到start.php
+            console.log('角色分配:', role);
             
             console.log('分配的角色:', role, '游戏URL:', gameUrl);
         }
@@ -249,6 +246,7 @@
             var form = document.createElement('form');
             form.method = 'post';
             form.action = gameUrl;
+            console.log('跳转至:', gameUrl);
             
             // 添加表单字段
             var fields = [
