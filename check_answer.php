@@ -1,0 +1,76 @@
+<?php
+    // Start the session
+    session_start();
+    
+    // 包含数据库配置
+    include '../config.inc';
+    
+    // 连接数据库
+    $conn = mysqli_connect('localhost', $db_user, $db_password, $db_name, $db_port);
+    if (mysqli_connect_errno()) {
+        echo '数据库连接失败: ' . mysqli_connect_error();
+        exit();
+    }
+    
+    // 设置字符集
+    mysqli_set_charset($conn, 'utf8');
+    
+    // 接收表单数据
+    $username = $_POST['username'];
+    $user_id = $_POST['user_id'];
+    $room = $_POST['room'];
+    $rival = $_POST['rival'];
+    $rival_id = $_POST['rival_id'];
+    $first_user_id = $_POST['first_user_id'];
+    $role = $_POST['role'];
+    $user_guess = $_POST['guess'];
+    
+    // 保存会话变量
+    $_SESSION['username'] = $username;
+    $_SESSION['user_id'] = $user_id;
+    $_SESSION['room'] = $room;
+    $_SESSION['rival'] = $rival;
+    $_SESSION['rival_id'] = $rival_id;
+    $_SESSION['first_user_id'] = $first_user_id;
+    $_SESSION['role'] = $role;
+    
+    // 这里需要获取本轮游戏的正确答案
+    // 假设我们在room表中存储了当前回合的正确答案
+    // 实际实现时需要根据数据库结构进行调整
+    $stmt = mysqli_prepare($conn, "SELECT current_word FROM tb_room WHERE name = ?");
+    mysqli_stmt_bind_param($stmt, 's', $room);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    
+    if ($row = mysqli_fetch_assoc($result)) {
+        $correct_word = $row['current_word'];
+        
+        // 保存正确答案到会话中，以便在结果页面显示
+        $_SESSION['correct_word'] = $correct_word;
+        $_SESSION['user_guess'] = $user_guess;
+        
+        // 比较用户猜测和正确答案（不区分大小写）
+        if (strcasecmp($user_guess, $correct_word) === 0) {
+            // 猜测正确
+            
+            // 更新用户分数
+            $stmt = mysqli_prepare($conn, "UPDATE tb_user SET score = score + 1 WHERE id = ?");
+            mysqli_stmt_bind_param($stmt, 'i', $user_id);
+            mysqli_stmt_execute($stmt);
+            
+            // 重定向到正确页面
+            header('Location: right.php');
+        } else {
+            // 猜测错误
+            
+            // 重定向到错误页面
+            header('Location: wrong.php');
+        }
+    } else {
+        // 没有找到对应的房间或正确答案
+        echo '游戏数据错误，请重新开始';
+    }
+    
+    // 关闭数据库连接
+    mysqli_close($conn);
+?>

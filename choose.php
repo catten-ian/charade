@@ -65,7 +65,7 @@
     <title>Charades!</title>
     <link rel="stylesheet" href="styles2.css">
     <style type="text/css">
-        @font_face {
+        @font-face {
             font-family:"SourceHanSans-Medium";
             src: url('./SourceHanSans-Medium.ttc') format('truetype');
             font-weight: normal;
@@ -88,7 +88,8 @@
     <div style="position:fixed;bottom:10%;left:5%;align:right;-webkit-text-stroke: calc(2vw + 2vh) #F5E33F;z-index:0;font-size: 80pt;font-family:'title.ttf';font-color:white;" ><?php echo $word4;?> </div>
     <div style="position:fixed;bottom:10%;left:5%;align:left;font-size: 80pt;font-family:"SourceHanSans-Medium";font-color:white;z-index:2;" onclick="userClick('<?php echo $word4;?>');"><?php echo $word4;?> </div>
 
-    <img src="./start6.svg" style="transform: translateX(90%);transition: transform 4s linear 0.1s;">
+    <img id="movie1"src="./start6.svg" style="transform: translateX(0);transition: transform 0.1s linear 2s;">
+
 
     <script>
         var timeObj=new Date();
@@ -96,6 +97,7 @@
         var timeCur;
         var Count1=0;
         var window_width=window.innerWidth;
+        document.getElementById("movie1").style.transform="translateX(100vw)";
         // timer1=setInterval(checkUserCount,1000);    
         <?php 
             $username=$_SESSION['username'];
@@ -114,7 +116,36 @@
        
         function userClick(theWord)
         {
-            alert(theWord);
+            console.log('选择的词语:', theWord);
+            
+            // 创建表单并提交到describe.php页面
+            var form = document.createElement('form');
+            form.method = 'post';
+            form.action = 'describe.php';
+            
+            // 添加表单字段
+            var fields = [
+                {name: 'username', value: username},
+                {name: 'user_id', value: user_id},
+                {name: 'room', value: room},
+                {name: 'rival', value: rival},
+                {name: 'rival_id', value: rival_id},
+                {name: 'first_user_id', value: first_user_id},
+                {name: 'role', value: 'describer'},
+                {name: 'selected_word', value: theWord}
+            ];
+            
+            // 创建并添加所有隐藏字段
+            fields.forEach(function(field) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = field.name;
+                input.value = field.value;
+                form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
         }
     </script>
 </body>

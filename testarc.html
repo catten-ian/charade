@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圆弧排列文本</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .svg-container {
+                transition: all 0.3s ease;
+            }
+            .controls {
+                @apply bg-white p-4 rounded-lg shadow-lg max-w-md mx-auto mt-6;
+            }
+            .control-group {
+                @apply mb-4;
+            }
+            .control-label {
+                @apply block text-sm font-medium text-gray-700 mb-1;
+            }
+            .control-input {
+                @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary;
+            }
+            .apply-btn {
+                @apply bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md transition-all duration-300 transform hover:scale-105;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-inter">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-center text-gray-800 mb-6">圆弧排列文本展示</h1>
+        
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-4xl mx-auto">
+            <div class="svg-container relative w-full h-[400px] bg-gray-100 rounded-lg overflow-hidden">
+                <svg id="textArcSVG" viewBox="0 0 600 400" class="w-full h-full">
+                    <!-- 坐标轴参考线 -->
+                    <line x1="0" y1="200" x2="600" y2="200" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5" />
+                    <line x1="300" y1="0" x2="300" y2="400" stroke="#ccc" stroke-width="1" stroke-dasharray="5,5" />
+                    
+                    <!-- 中心点标记 -->
+                    <circle id="centerPoint" cx="300" cy="200" r="5" fill="#FF5722" />
+                    
+                    <!-- 圆弧参考线 -->
+                    <path id="arcPath" fill="none" stroke="#9C27B0" stroke-width="2" stroke-dasharray="5,5" />
+                    
+                    <!-- 文本将通过JavaScript动态添加到这里 -->
+                    <g id="textGroup"></g>
+                </svg>
+            </div>
+            
+            <div class="controls">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">参数控制</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="control-group">
+                        <label for="inputString" class="control-label">输入字符串</label>
+                        <input type="text" id="inputString" value="abcdef" class="control-input">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="centerX" class="control-label">圆心 X 坐标</label>
+                        <input type="number" id="centerX" value="300" min="50" max="550" class="control-input">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="centerY" class="control-label">圆心 Y 坐标</label>
+                        <input type="number" id="centerY" value="200" min="50" max="350" class="control-input">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="radius" class="control-label">圆弧半径</label>
+                        <input type="number" id="radius" value="100" min="30" max="200" class="control-input">
+                    </div>
+                    
+                    <div class="control-group md:col-span-2">
+                        <label for="arcSpan" class="control-label">圆弧跨度 (弧度)</label>
+                        <div class="flex items-center">
+                            <input type="range" id="arcSpan" min="0.1" max="3.14" step="0.01" value="1.57" 
+                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <span id="arcSpanValue" class="ml-2 text-sm font-medium">1.57</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="applyButton" class="apply-btn mt-2 flex items-center justify-center">
+                    <i class="fa fa-refresh mr-2"></i> 应用设置
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const svg = document.getElementById('textArcSVG');
+            const textGroup = document.getElementById('textGroup');
+            const arcPath = document.getElementById('arcPath');
+            const centerPoint = document.getElementById('centerPoint');
+            
+            const inputString = document.getElementById('inputString');
+            const centerX = document.getElementById('centerX');
+            const centerY = document.getElementById('centerY');
+            const radius = document.getElementById('radius');
+            const arcSpan = document.getElementById('arcSpan');
+            const arcSpanValue = document.getElementById('arcSpanValue');
+            const applyButton = document.getElementById('applyButton');
+            
+            // 更新圆弧跨度显示值
+            arcSpan.addEventListener('input', function() {
+                arcSpanValue.textContent = parseFloat(this.value).toFixed(2);
+            });
+            
+            // 应用按钮点击事件
+            applyButton.addEventListener('click', updateTextOnArc);
+            
+            // 初始渲染
+            updateTextOnArc();
+            
+            function updateTextOnArc() {
+                // 清除现有文本
+                while (textGroup.firstChild) {
+                    textGroup.removeChild(textGroup.firstChild);
+                }
+                
+                // 获取参数值
+                const text = inputString.value;
+                const x = parseInt(centerX.value);
+                const y = parseInt(centerY.value);
+                const r = parseInt(radius.value);
+                const span = parseFloat(arcSpan.value);
+                
+                // 更新中心点位置
+                centerPoint.setAttribute('cx', x);
+                centerPoint.setAttribute('cy', y);
+                
+                // 计算圆弧路径
+                const startAngle = Math.PI/2 - span/2;
+                const endAngle = Math.PI/2 + span/2;
+                
+                const startX = x + r * Math.cos(startAngle);
+                const startY = y - r * Math.sin(startAngle); // y轴在SVG中是向下的
+                const endX = x + r * Math.cos(endAngle);
+                const endY = y - r * Math.sin(endAngle);
+                
+                // 大弧标志 (span > π ? 1 : 0)
+                const largeArcFlag = span > Math.PI ? 1 : 0;
+                
+                // 更新参考圆弧路径
+                const arcPathData = `M ${startX} ${startY} A ${r} ${r} 0 ${largeArcFlag} 0 ${endX} ${endY}`;
+                arcPath.setAttribute('d', arcPathData);
+                
+                // 计算每个字符的角度间隔
+                const angleStep = span / (text.length - 1);
+                
+                // 为每个字符创建单独的文本元素
+                for (let i = 0; i < text.length; i++) {
+                    // 从圆弧顶部开始，向两侧分布
+                    const angle = startAngle + i * angleStep;
+                    
+                    // 计算字符位置
+                    const charX = x + r * Math.cos(angle);
+                    const charY = y - r * Math.sin(angle);
+                    
+                    // 计算字符旋转角度（切线方向）
+                    const rotateAngle = 0;//(angle - Math.PI/2) * 180 / Math.PI;
+                    
+                    // 创建文本元素
+                    const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    textElement.setAttribute('x', charX);
+                    textElement.setAttribute('y', charY);
+                    textElement.setAttribute('text-anchor', 'middle');
+                    textElement.setAttribute('dominant-baseline', 'middle');
+                    textElement.setAttribute('font-family', 'Arial, sans-serif');
+                    textElement.setAttribute('font-size', '24');
+                    textElement.setAttribute('fill', '#333');
+                    textElement.setAttribute('transform', `rotate(${rotateAngle}, ${charX}, ${charY})`);
+                    textElement.textContent = text[text.length-1-i];
+                    
+                    // 添加到SVG
+                    textGroup.appendChild(textElement);
+                }
+            }
+        });
+    </script>
+</body>
+</html>    
