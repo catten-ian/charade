@@ -34,9 +34,19 @@
     $_SESSION['first_user_id'] = $first_user_id;
     $_SESSION['role'] = $role;
     
-    // 这里需要获取本轮游戏的正确答案
-    // 假设我们在room表中存储了当前回合的正确答案
-    // 实际实现时需要根据数据库结构进行调整
+    // 初始化猜测次数和历史记录
+    if (!isset($_SESSION['guess_count'])) {
+        $_SESSION['guess_count'] = 0;
+        $_SESSION['guess_history'] = [];
+    }
+    
+    // 增加猜测次数
+    $_SESSION['guess_count']++;
+    
+    // 记录当前猜测
+    $_SESSION['guess_history'][] = $user_guess;
+    
+    // 获取本轮游戏的正确答案
     $stmt = mysqli_prepare($conn, "SELECT current_word FROM tb_room WHERE name = ?");
     mysqli_stmt_bind_param($stmt, 's', $room);
     mysqli_stmt_execute($stmt);
@@ -47,7 +57,7 @@
         
         // 保存正确答案到会话中，以便在结果页面显示
         $_SESSION['correct_word'] = $correct_word;
-        $_SESSION['user_guess'] = $user_guess;
+        $_SESSION['current_guess'] = $user_guess;
         
         // 比较用户猜测和正确答案（不区分大小写）
         if (strcasecmp($user_guess, $correct_word) === 0) {
@@ -58,13 +68,36 @@
             mysqli_stmt_bind_param($stmt, 'i', $user_id);
             mysqli_stmt_execute($stmt);
             
+            // 设置游戏状态为完成（猜对）
+            $stmt = mysqli_prepare($conn, "UPDATE tb_room SET game_status = 'completed', winner_id = ? WHERE name = ?");
+            mysqli_stmt_bind_param($stmt, 'is', $user_id, $room);
+            mysqli_stmt_execute($stmt);
+            
+            // 记录猜对的用户
+            $_SESSION['guessed_username'] = $username;
+            
             // 重定向到正确页面
             header('Location: right.php');
         } else {
             // 猜测错误
             
-            // 重定向到错误页面
-            header('Location: wrong.php');
+            // 检查是否达到最大猜测次数
+            if ($_SESSION['guess_count'] >= 3) {
+                // 3次都猜错了，游戏结束
+                
+                // 设置游戏状态为完成（猜错）
+                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET game_status = 'completed' WHERE name = ?");
+                mysqli_stmt_bind_param($stmt, 's', $room);
+                mysqli_stmt_execute($stmt);
+                
+                // 重定向到错误页面
+                header('Location: wrong.php');
+            } else {
+                // 还有猜测机会，返回guess.php继续猜测
+                
+                // 将当前猜测结果保存到会话，供guess.php显示
+                header('Location: guess.php');
+            }
         }
     } else {
         // 没有找到对应的房间或正确答案

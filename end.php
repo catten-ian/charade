@@ -131,6 +131,7 @@
         <img src="./end3.svg" style="position:absolute;left:0vw;bottom:0vh;overflow:hidden;height:100%;z-index:0;opacity: 1;">
         <!-- 将原end4.svg的img标签修改为以下内容 -->
         <img 
+            id="againBtn" 
             src="./end4.svg" 
             style="position:absolute;left: 9.1vw;bottom: 19vh;overflow:hidden;height: 29.5vh;z-index:0;opacity: 1;cursor: pointer;" 
             onmousedown="this.src = './end5.svg'"
@@ -141,13 +142,69 @@
         >
 
         <script>
-            // 其他原有脚本...
+            // 存储用户点击状态的本地存储键名
+            const CLICK_STATUS_KEY = 'game_again_clicked_' + room;
+            
+            // 标记用户是否已经点击
+            let hasClicked = false;
+            
+            // 监听本地存储变化，用于检测对手是否点击
+            window.addEventListener('storage', function(e) {
+                if (e.key === CLICK_STATUS_KEY && e.newValue === 'clicked') {
+                    console.log('检测到对手已点击，即将进入新游戏');
+                    startNewGame();
+                }
+            });
             
             // 点击事件处理函数
             function handleClick() {
-                console.log('返回首页按钮被点击了');
-                // 跳转到首页或游戏开始页面
-                window.location.href = 'index.php';
+                console.log('再次游戏按钮被点击了');
+                
+                if (hasClicked) {
+                    return; // 防止重复点击
+                }
+                
+                hasClicked = true;
+                
+                // 在本地存储中标记为已点击
+                localStorage.setItem(CLICK_STATUS_KEY, 'clicked');
+                
+                // 创建表单并提交到新游戏房间
+                startNewGame();
+            }
+            
+            // 开始新游戏
+            function startNewGame() {
+                // 重置轮次计数
+                localStorage.removeItem('roundCount');
+                
+                // 创建表单并提交到房间页面
+                var form = document.createElement('form');
+                form.method = 'post';
+                form.action = 'exampleroom2.php';
+                
+                // 添加表单字段
+                var fields = [
+                    {name: 'username', value: username},
+                    {name: 'user_id', value: user_id},
+                    {name: 'room', value: room},
+                    {name: 'rival', value: rival},
+                    {name: 'rival_id', value: rival_id},
+                    {name: 'first_user_id', value: first_user_id},
+                    {name: 'new_game', value: 'true'}
+                ];
+                
+                // 创建并添加所有隐藏字段
+                fields.forEach(function(field) {
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = field.name;
+                    input.value = field.value;
+                    form.appendChild(input);
+                });
+                
+                document.body.appendChild(form);
+                form.submit();
             }
         </script>
         <img src="./end6.svg" style="position:absolute;left: 10.2vw;bottom: 57vh;overflow:hidden;height: 9.3vh;z-index:0;opacity: 1;">
@@ -213,32 +270,23 @@
         var Count1=0;
         var window_width=window.innerWidth;
         timer1=setInterval(checkUserCount,1000);    
-        <?php 
-            $username=$_SESSION['username'];
-            $user_id = $_SESSION['user_id'];
-            $room = $_SESSION['room'];
-            $rival = $_SESSION['rival'];
-            $rival_id = $_SESSION['rival_id'];
-            $first_user_id = $_SESSION['first_user_id'];
-            print("var username='$username';\n");
-            print("var user_id=$user_id;\n");
-            print("var room = '$room';\n");
-            print("var rival = '$rival';\n");
-            print("var rival_id = $rival_id;\n");
-            print("var first_user_id = $first_user_id;\n");
-        ?>
+        
+        // 检查是否已经有用户点击了再次游戏按钮
+        if (localStorage.getItem(CLICK_STATUS_KEY) === 'clicked') {
+            console.log('检测到已有玩家点击了再次游戏，开始倒计时');
+        }
+        
         function checkUserCount() {
             console.log("Checking user count");
             timeCur = timeObj.getTime();
             Count1 = Count1 + 1;
             
-            // 这里可以添加逻辑来自动返回首页或执行其他操作
-            // 例如，10秒后自动返回首页
-            if (Count1 >= 10) {
+            // 检查是否已经点击过，并且等待了60秒对手仍未点击
+            if (hasClicked && Count1 >= 60) {
                 Count1 = -1000;
                 clearInterval(timer1);
-                console.log("自动返回首页");
-                window.location.href = 'index.php';
+                console.log("对手60秒内未点击，自动进入新游戏");
+                startNewGame();
             }
         }
     </script>

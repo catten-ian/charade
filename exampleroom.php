@@ -3,6 +3,8 @@
     session_start();
     //$_SESSION['postdata']=json_decode($_POST);
     $_SESSION['username'] = $_POST['username'];
+    // 保存用户类型为1
+    $_SESSION['type'] = '1';
 
     include "../config.inc";
 

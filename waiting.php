@@ -90,7 +90,7 @@
             background-color: #F16739;
             border-radius: 20px;
             /* 进度动画：5秒从左到右，结束后保持状态 */
-            animation: progressFill 5s linear forwards;
+            animation: progressFill 10s linear forwards;
         }
 
         /* 随进度移动的图片 */

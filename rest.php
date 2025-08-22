@@ -169,10 +169,39 @@
                 clearInterval(timer1);
                 console.log("跳转至下一轮游戏");
                 
-                // 创建表单并提交到下一轮游戏页面
+                // 获取当前轮次计数（初始为0）
+                var roundCount = parseInt(localStorage.getItem('roundCount') || '0');
+                roundCount++;
+                
+                // 检查是否达到4轮
+                if (roundCount >= 4) {
+                    console.log("已完成4轮游戏，跳转到结束页面");
+                    window.location.href = 'end.php';
+                    return;
+                }
+                
+                // 保存更新后的轮次计数
+                localStorage.setItem('roundCount', roundCount.toString());
+                
+                // 角色交换逻辑：根据用户ID和first_user_id决定当前角色
+                var isFirstUser = (user_id == first_user_id);
+                var targetPage = '';
+                
+                // 如果是偶数轮（从1开始计数），角色保持不变；如果是奇数轮，角色交换
+                if (roundCount % 2 == 0) {
+                    // 偶数轮，角色交换
+                    targetPage = isFirstUser ? 'waiting.php' : 'choose.php';
+                } else {
+                    // 奇数轮，角色保持不变
+                    targetPage = isFirstUser ? 'choose.php' : 'waiting.php';
+                }
+                
+                console.log("轮次: " + roundCount + "，目标页面: " + targetPage);
+                
+                // 创建表单并提交到目标页面
                 var form = document.createElement('form');
                 form.method = 'post';
-                form.action = 'exampleroom2.php';
+                form.action = targetPage;
                 
                 // 添加表单字段
                 var fields = [
@@ -181,7 +210,8 @@
                     {name: 'room', value: room},
                     {name: 'rival', value: rival},
                     {name: 'rival_id', value: rival_id},
-                    {name: 'first_user_id', value: first_user_id}
+                    {name: 'first_user_id', value: first_user_id},
+                    {name: 'roundCount', value: roundCount}
                 ];
                 
                 // 创建并添加所有隐藏字段

@@ -37,6 +37,18 @@
         mysqli_stmt_bind_param($stmt, 'ss', $selected_word, $room);
         mysqli_stmt_execute($stmt);
         
+        // 获取所选词汇在tb_words表中的id并更新房间的word_id
+        $stmt = mysqli_prepare($conn, "SELECT id FROM tb_words WHERE word = ?");
+        mysqli_stmt_bind_param($stmt, 's', $selected_word);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        if ($row = mysqli_fetch_assoc($result)) {
+            $word_id = $row['id'];
+            $stmt = mysqli_prepare($conn, "UPDATE tb_room SET word_id = ? WHERE name = ?");
+            mysqli_stmt_bind_param($stmt, 'is', $word_id, $room);
+            mysqli_stmt_execute($stmt);
+        }
+        
         mysqli_close($conn);
     } else {
         // 如果不是POST请求，从会话中获取数据
@@ -155,6 +167,28 @@
         
         // 定时检查
         timer1 = setInterval(checkUserCount, 1000);
+        
+        // 检查猜测者状态
+        function checkGuesserStatus() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'check_guesser_status.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        // 这里可以根据实际情况处理猜测者状态
+                        console.log('猜测者状态:', response);
+                    } catch (e) {
+                        console.error('解析响应时出错:', e);
+                    }
+                }
+            };
+            xhr.send('room=' + encodeURIComponent(room) + '&username=' + encodeURIComponent(username));
+        }
+        
+        // 每2秒检查一次猜测者状态
+        setInterval(checkGuesserStatus, 2000);
 
         // 使用示例
         const canvas = document.getElementById('myCanvas');
@@ -169,18 +203,16 @@
             timeCur = timeObj.getTime();
             Count1 = Count1 + 1;
             
-            // 这里可以添加逻辑来检查猜测者是否已经完成猜测
-            // 例如，定期查询数据库检查游戏状态
-            // 在这个简单的实现中，我们假设游戏会在60秒后结束
-            if (Count1 >= 60) {
+            // 3分钟后自动跳转（如果还没有结果）
+            if (Count1 >= 180) { // 3分钟 = 180秒
                 Count1 = -1000;
                 clearInterval(timer1);
-                console.log("时间到，游戏结束");
+                console.log("3分钟时间到，游戏结束");
                 
-                // 创建表单并提交到结束页面
+                // 创建表单并提交到错误页面
                 var form = document.createElement('form');
                 form.method = 'post';
-                form.action = 'end.php';
+                form.action = 'wrong.php';
                 
                 // 添加表单字段
                 var fields = [
@@ -189,7 +221,8 @@
                     {name: 'room', value: room},
                     {name: 'rival', value: rival},
                     {name: 'rival_id', value: rival_id},
-                    {name: 'first_user_id', value: first_user_id}
+                    {name: 'first_user_id', value: first_user_id},
+                    {name: 'selected_word', value: selected_word}
                 ];
                 
                 // 创建并添加所有隐藏字段

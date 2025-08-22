@@ -53,7 +53,7 @@
         <img src="./avatarexample.png" style="position:absolute;left: 6.5vw;bottom: 17vh;overflow:hidden;height: 57vh;z-index:0;opacity: 1;"> <!-- 头像 -->
 
         <!-- <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;font-family: 'SourceHanSans-Heavy', sans-serif;font-size:44px;color:white;"> -->
-        <div style="
+        <div id="name" style="
             position:absolute;
             width:80vw;
             height:20vh;
@@ -70,7 +70,7 @@
         ">
             圣诞鹿
         </div>
-        <div style="
+        <div id="word" style="
             position:absolute;
             width: 80vw;
             height:20vh;
@@ -86,7 +86,7 @@
         ">
             圣诞鹿
         </div>
-        <div style="
+        <div id="word2" style="
             position:absolute;
             width: 80vw;
             height:20vh;
@@ -129,7 +129,7 @@
             timeCur = timeObj.getTime();
             Count1 = Count1 + 1;
             
-            if (Count1 >= 3) { // 显示3秒后跳转到休息页面
+            if (Count1 >= 15) { // 显示15秒后跳转到休息页面
                 Count1 = -1000;
                 clearInterval(timer1);
                 console.log("跳转至休息页面");
