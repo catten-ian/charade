@@ -97,11 +97,11 @@
     </div>
     
     <form id="wordForm" action="describe.php" method="post">
-        <input type="hidden" id="selectedWord" name="word">
-        <input type="hidden" id="selectedWordFinal" name="word_final">
-        <input type="hidden" name="username" value="<?php echo $username; ?>">
-        <input type="hidden" name="user_id" value="<?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : ''; ?>">
-    </form>
+    <input type="hidden" name="user_id" value="<?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : ''; ?>">
+    <input type="hidden" id="selectedWord" name="word">
+    <input type="hidden" id="selectedWordFinal" name="word_final">
+    <input type="hidden" name="username" value="<?php echo $username; ?>"> <!-- 保留作为辅助显示 -->
+</form>
 
     <!-- <img src="./example4.png" style="left:0px;top:0px;z-index:-1;filter:brightness(50%);width:100vw;height:100vh;overflow:hidden;"> -->
     <!-- 四个角落的图片 -->
@@ -130,8 +130,9 @@
         <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $word4; ?></p>
     </div>
     <script>
-        // 全局变量
-        var username = "<?php echo $username; ?>";
+        // 全局变量 - 优先使用user_id作为主要标识
+        var user_id = "<?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : ''; ?>";
+        var username = "<?php echo $username; ?>"; // 保留作为辅助显示
         var timer = 10;
         var timerInterval;
         var selectedWord = "<?php echo $word1; ?>"; // 默认选择word1
@@ -227,7 +228,7 @@
                     callback(response.allReady);
                 }
             };
-            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + user_id);
+            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + encodeURIComponent(user_id) + '&username=' + encodeURIComponent(username));
         }
         
         // 处理未响应的猜测者
@@ -235,7 +236,7 @@
             var xhr = new XMLHttpRequest();
             xhr.open('POST', 'kick_unresponsive_guessers.php', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + user_id);
+            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + encodeURIComponent(user_id) + '&username=' + encodeURIComponent(username));
         }
         
         // 页面加载时启动计时器

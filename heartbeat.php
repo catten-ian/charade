@@ -13,36 +13,50 @@ if (mysqli_connect_errno()) {
 }
 mysqli_set_charset($conn, "utf8");
 
-// 获取前端传递的参数
+// 获取前端传递的参数 - 优先使用user_id作为主要标识
+$userId = isset($_POST['user_id']) ? (int)$_POST['user_id'] : null;
 $username = isset($_POST['username']) ? trim($_POST['username']) : '';
 $isActive = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 0;
 $isOnline = isset($_POST['is_online']) ? (int)$_POST['is_online'] : 1;
 $pageType = isset($_POST['page_type']) ? trim($_POST['page_type']) : '';
 
-// 如果用户名为空，直接退出
-if (empty($username)) {
-    mysqli_close($conn);
-    exit;
-}
-
-// 使用预处理语句获取用户ID，避免SQL注入
-$userId = null;
-$userStmt = mysqli_prepare($conn, "SELECT id FROM tb_user WHERE name = ?");
-mysqli_stmt_bind_param($userStmt, 's', $username);
-mysqli_stmt_execute($userStmt);
-$userResult = mysqli_stmt_get_result($userStmt);
-if ($userRow = mysqli_fetch_assoc($userResult)) {
-    $userId = $userRow['id'];
-    // Logger::info("获取用户ID成功", ["username" => $username, "user_id" => $userId]);
-} else {
-    // Logger::warning("用户不存在", ["username" => $username]);
-}
-mysqli_stmt_close($userStmt);
-
-// 如果用户不存在，直接退出
+// 如果没有user_id，则尝试通过username获取
 if ($userId === null) {
-    mysqli_close($conn);
-    exit;
+    if (empty($username)) {
+        mysqli_close($conn);
+        exit;
+    }
+    
+    // 使用预处理语句获取用户ID，避免SQL注入
+    $userStmt = mysqli_prepare($conn, "SELECT id FROM tb_user WHERE name = ?");
+    mysqli_stmt_bind_param($userStmt, 's', $username);
+    mysqli_stmt_execute($userStmt);
+    $userResult = mysqli_stmt_get_result($userStmt);
+    if ($userRow = mysqli_fetch_assoc($userResult)) {
+        $userId = $userRow['id'];
+        // Logger::info("获取用户ID成功", ["username" => $username, "user_id" => $userId]);
+    } else {
+        // Logger::warning("用户不存在", ["username" => $username]);
+        mysqli_stmt_close($userStmt);
+        mysqli_close($conn);
+        exit;
+    }
+    mysqli_stmt_close($userStmt);
+} else {
+    // 如果有user_id，验证用户是否存在
+    $userStmt = mysqli_prepare($conn, "SELECT name FROM tb_user WHERE id = ?");
+    mysqli_stmt_bind_param($userStmt, 'i', $userId);
+    mysqli_stmt_execute($userStmt);
+    $userResult = mysqli_stmt_get_result($userStmt);
+    if ($userRow = mysqli_fetch_assoc($userResult)) {
+        $username = $userRow['name']; // 更新username变量
+    } else {
+        // Logger::warning("用户不存在", ["user_id" => $userId]);
+        mysqli_stmt_close($userStmt);
+        mysqli_close($conn);
+        exit;
+    }
+    mysqli_stmt_close($userStmt);
 }
 
 // 1. 更新最后活动时间（使用用户ID更高效）
@@ -74,17 +88,6 @@ mysqli_stmt_close($roomStmt);
         // 页面关闭/离线：type=5
         $type = 5;
     } else {
-        // 检查用户当前type，用于决定是否可以更新为1
-        $currentType = null;
-        $typeStmt = mysqli_prepare($conn, "SELECT type FROM tb_user WHERE id = ?");
-        mysqli_stmt_bind_param($typeStmt, 'i', $userId);
-        mysqli_stmt_execute($typeStmt);
-        $typeResult = mysqli_stmt_get_result($typeStmt);
-        if ($typeRow = mysqli_fetch_assoc($typeResult)) {
-            $currentType = $typeRow['type'];
-        }
-        mysqli_stmt_close($typeStmt);
-        
         // 检查页面类型
         if ($pageType == 'start') {
             // 在start页面：type=4
@@ -93,28 +96,11 @@ mysqli_stmt_close($roomStmt);
             // 在其他特殊游戏页面：type=3
             $type = 3;
         } else if ($pageType == 'exampleroom' || $pageType == 'exampleroom2') {
-            // 在example room或example room2页面：根据是否在房间内、活跃度和当前type判断
-            // 确保只有从login送来的或者是type为3或4的用户才将其type更新为1
-            if ($inRoom || $isActive) {
-                if ($currentType == 3 || $currentType == 4 || $pageType == 'login') {
-                    $type = 1;
-                } else {
-                    $type = $currentType; // 保持原类型
-                }
-            } else {
-                $type = 6;
-            }
+            // 在example room或example room2页面：根据是否在房间内和活跃度判断
+            $type = $inRoom ? 1 : ($isActive ? 1 : 6);
         } else {
-            // 其他情况：根据活跃度和当前type判断
-            if ($isActive) {
-                if ($currentType == 3 || $currentType == 4 || $pageType == 'login') {
-                    $type = 1;
-                } else {
-                    $type = $currentType; // 保持原类型
-                }
-            } else {
-                $type = 6;
-            }
+            // 其他情况：根据活跃度判断
+            $type = $isActive ? 1 : 6;
         }
     }
 

@@ -90,12 +90,12 @@
     <script>
         // 接收POST数据并设置会话变量
         <?php
-            // 接收从waiting.php传递的表单数据
-            if (isset($_POST['username'])) {
-                $_SESSION['username'] = $_POST['username'];
-            }
+            // 接收从waiting.php传递的表单数据 - 优先使用user_id作为主要标识
             if (isset($_POST['user_id'])) {
                 $_SESSION['user_id'] = $_POST['user_id'];
+            }
+            if (isset($_POST['username'])) {
+                $_SESSION['username'] = $_POST['username'];
             }
             if (isset($_POST['room'])) {
                 $_SESSION['room'] = $_POST['room'];
@@ -113,8 +113,8 @@
                 $_SESSION['role'] = $_POST['role'];
             }
             
-            $username = $_SESSION['username'];
             $user_id = $_SESSION['user_id'];
+            $username = $_SESSION['username']; // 保留作为辅助显示
             $room = $_SESSION['room'];
             $rival = $_SESSION['rival'];
             $rival_id = $_SESSION['rival_id'];
@@ -125,11 +125,11 @@
             $correct_word = isset($_SESSION['correct_word']) ? $_SESSION['correct_word'] : '';
             $current_guess = isset($_SESSION['current_guess']) ? $_SESSION['current_guess'] : '';
             
-            print("var username='$username';\n");
             print("var user_id=$user_id;\n");
+            print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
-            print("var rival = '$rival';\n");
             print("var rival_id = $rival_id;\n");
+            print("var rival = '$rival'; // 保留作为辅助显示\n");
             print("var first_user_id = $first_user_id;\n");
             print("var guess_count = $guess_count;\n");
             print("var guess_history = $guess_history;\n");
@@ -288,13 +288,13 @@
                 form.method = 'post';
                 form.action = 'check_answer.php';
                 
-                // 添加表单字段
+                // 添加表单字段 - 优先使用user_id作为主要标识
                 var fields = [
-                    {name: 'username', value: username},
                     {name: 'user_id', value: user_id},
+                    {name: 'username', value: username},
                     {name: 'room', value: room},
-                    {name: 'rival', value: rival},
                     {name: 'rival_id', value: rival_id},
+                    {name: 'rival', value: rival},
                     {name: 'first_user_id', value: first_user_id},
                     {name: 'role', value: 'guesser'},
                     {name: 'guess', value: userGuess}

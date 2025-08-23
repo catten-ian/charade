@@ -38,7 +38,7 @@ document.getElementById('topButton').addEventListener('click', function() {
         var username=document.getElementById("user-input").value;
         // var item1=document.getElementById("user-input");
         // console.log(item1.value);        
-        var post_data={'username':username, 'type':'1'};
+        var post_data={'username':username, 'type':'1', 'from_login':'1'};
         //alert(post_data);
         jspost("exampleroom.php",post_data);
     }, 500);

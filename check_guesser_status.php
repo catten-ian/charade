@@ -13,28 +13,53 @@
     
     mysqli_set_charset($conn,"utf8");
     
-    // 获取房间名称和用户标识符
+    // 获取房间名称和用户标识 - 优先使用user_id
     $room = isset($_POST['room']) ? $_POST['room'] : '';
+    $user_id = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
     $username = isset($_POST['username']) ? $_POST['username'] : '';
-    $user_id = isset($_POST['user_id']) ? $_POST['user_id'] : '';
-
+    
     // 检查参数是否有效
-    if (empty($room) || (empty($username) && empty($user_id))) {
+    if (empty($room) || ($user_id == 0 && empty($username))) {
         echo json_encode(array('allReady' => true));
         exit;
     }
     
+    // 如果没有user_id，通过username获取
+    if ($user_id == 0) {
+        $stmt = mysqli_prepare($conn, "SELECT id FROM tb_user WHERE name = ?");
+        mysqli_stmt_bind_param($stmt, 's', $username);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        if ($row = mysqli_fetch_assoc($result)) {
+            $user_id = $row['id'];
+        } else {
+            // 用户不存在
+            echo json_encode(array('allReady' => true));
+            exit;
+        }
+        mysqli_stmt_close($stmt);
+    }
+    
     try {
-        // 检查房间中的所有猜测者是否已经跳转到guess页面
-        $sql = "SELECT COUNT(*) as count FROM tb_users WHERE room = ? AND type = 3 AND page_type != 'guess'";
+        // 获取房间中的所有用户
+        $sql = "SELECT u.id, u.type, u.page_type 
+                FROM tb_user u 
+                JOIN tb_room r ON u.id = r.user_id0 OR u.id = r.user_id1 
+                WHERE r.name = ? AND u.id != ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $room);
-        $stmt->execute();
+        mysqli_stmt_bind_param($stmt, "si", $room, $user_id);
+        mysqli_stmt_execute($stmt);
         $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
         
-        // 如果还有未跳转的猜测者，返回false；否则返回true
-        $allReady = ($row['count'] == 0);
+        $allReady = true;
+        while ($row = mysqli_fetch_assoc($result)) {
+            // 检查其他用户是否已准备好（type=3且page_type='guess'）
+            if ($row['type'] != 3 || $row['page_type'] != 'guess') {
+                $allReady = false;
+                break;
+            }
+        }
+        
         echo json_encode(array('allReady' => $allReady));
         
         $stmt->close();

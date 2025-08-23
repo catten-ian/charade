@@ -15,22 +15,22 @@
     // 设置字符集
     mysqli_set_charset($conn, 'utf8');
     
-    // 接收表单数据
-    $username = $_POST['username'];
+    // 接收表单数据 - 优先使用user_id作为主要标识
     $user_id = $_POST['user_id'];
+    $username = $_POST['username'];
     $room = $_POST['room'];
-    $rival = $_POST['rival'];
     $rival_id = $_POST['rival_id'];
+    $rival = $_POST['rival'];
     $first_user_id = $_POST['first_user_id'];
     $role = $_POST['role'];
     $user_guess = $_POST['guess'];
     
     // 保存会话变量
-    $_SESSION['username'] = $username;
     $_SESSION['user_id'] = $user_id;
+    $_SESSION['username'] = $username; // 保留作为辅助显示
     $_SESSION['room'] = $room;
-    $_SESSION['rival'] = $rival;
     $_SESSION['rival_id'] = $rival_id;
+    $_SESSION['rival'] = $rival; // 保留作为辅助显示
     $_SESSION['first_user_id'] = $first_user_id;
     $_SESSION['role'] = $role;
     

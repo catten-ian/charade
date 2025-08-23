@@ -77,11 +77,11 @@
             $first_user_id = $_SESSION['first_user_id'];
             $role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
             
-            print("var username='$username';\n");
             print("var user_id=$user_id;\n");
+            print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
-            print("var rival = '$rival';\n");
             print("var rival_id = $rival_id;\n");
+            print("var rival = '$rival'; // 保留作为辅助显示\n");
             print("var first_user_id = $first_user_id;\n");
             print("var role = '$role';\n");
         ?>
@@ -91,7 +91,7 @@
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/charade/heartbeat.php', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send(`user_id=${user_id}&is_online=1&is_active=1&page_type=start`);
+            xhr.send(`user_id=${encodeURIComponent(user_id)}&username=${encodeURIComponent(username)}&is_online=1&is_active=1&page_type=start`);
         }
         
         // 页面关闭时将用户状态更新为5
@@ -99,13 +99,13 @@
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/charade/heartbeat.php', false); // 同步请求
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send(`user_id=${user_id}&is_online=0&page_type=start`);
+            xhr.send(`user_id=${encodeURIComponent(user_id)}&username=${encodeURIComponent(username)}&is_online=0&page_type=start`);
         });
         
         function checkUserCount()
         {
             timeCur=timeObj.getTime();  
-            Count1=Count1+1;           
+            Count1=Count1+1;            
             if(Count1>=5)
             {
                 /* stop timer */
@@ -131,7 +131,7 @@
                     }
                     else
                     {
-                        window.location.href="guess.php";
+                        window.location.href="waiting.php";
                     }
                 }
             }   

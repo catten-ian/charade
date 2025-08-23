@@ -13,79 +13,98 @@
     
     mysqli_set_charset($conn,"utf8");
     
-    // 获取房间名称和用户标识符
+    // 获取房间名称和用户标识 - 优先使用user_id
     $room = isset($_POST['room']) ? $_POST['room'] : '';
+    $user_id = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
     $username = isset($_POST['username']) ? $_POST['username'] : '';
-    $user_id = isset($_POST['user_id']) ? $_POST['user_id'] : '';
-
+    
     // 检查参数是否有效
-    if (empty($room) || (empty($username) && empty($user_id))) {
+    if (empty($room) || ($user_id == 0 && empty($username))) {
         echo json_encode(array('success' => false, 'error' => 'Invalid parameters'));
         exit;
     }
     
-    try {
-        // 1. 获取当前用户ID
-        $currentUserId = null;
-        
-        // 优先使用user_id获取用户
-        if (!empty($user_id)) {
-            $sql = "SELECT id FROM tb_users WHERE id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $user_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            if ($row = $result->fetch_assoc()) {
-                $currentUserId = $row['id'];
-            }
-            $stmt->close();
-        }
-        
-        // 如果通过user_id没有找到用户，或者没有提供user_id，则使用username
-        if (!$currentUserId && !empty($username)) {
-            $sql = "SELECT id FROM tb_users WHERE username = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("s", $username);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            if ($row = $result->fetch_assoc()) {
-                $currentUserId = $row['id'];
-            }
-            $stmt->close();
-        }
-        
-        if (!$currentUserId) {
+    // 如果没有user_id，通过username获取
+    if ($user_id == 0) {
+        $sql = "SELECT id FROM tb_user WHERE name = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $user_id = $row['id'];
+        } else {
             echo json_encode(array('success' => false, 'error' => 'Current user not found'));
             exit;
         }
+        $stmt->close();
+    } else {
+        // 如果有user_id，获取对应的username
+        $sql = "SELECT name FROM tb_user WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $username = $row['name'];
+        } else {
+            echo json_encode(array('success' => false, 'error' => 'Current user not found'));
+            exit;
+        }
+        $stmt->close();
+    }
+    
+    try {
+        // 1. 检查当前用户是否在房间中
+        $sql = "SELECT COUNT(*) as count FROM tb_room WHERE (user_id0 = ? OR user_id1 = ?) AND name = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("iis", $user_id, $user_id, $room);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        if ($row['count'] == 0) {
+            echo json_encode(array('success' => false, 'error' => 'User not in this room'));
+            exit;
+        }
+        $stmt->close();
         
         // 2. 获取未响应的猜测者（type为3且未跳转到guess页面的用户）
-        $sql = "SELECT id, username FROM tb_users WHERE room = ? AND type = 3 AND page_type != 'guess'";
+        // 首先获取房间中的所有用户
+        $sql = "SELECT u.id, u.name as username, u.type, u.page_type 
+                FROM tb_user u 
+                JOIN tb_room r ON u.id = r.user_id0 OR u.id = r.user_id1 
+                WHERE r.name = ? AND u.id != ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $room);
+        $stmt->bind_param("si", $room, $user_id);
         $stmt->execute();
         $unresponsiveGuessers = $stmt->get_result();
         $stmt->close();
         
         // 3. 将未响应的猜测者的type设置为6并从房间中踢出
         while ($guesser = $unresponsiveGuessers->fetch_assoc()) {
-            $sql = "UPDATE tb_users SET type = 6, room = NULL, last_active = NOW() WHERE id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $guesser['id']);
-            $stmt->execute();
-            $stmt->close();
-            
-            // 记录日志
-            $logMessage = "用户 {" . $guesser['username'] . "} 因未响应被踢出房间 {" . $room . "}";
-            $sql = "INSERT INTO tb_logs (username, action, log_time) VALUES (?, ?, NOW())";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ss", $guesser['username'], $logMessage);
-            $stmt->execute();
-            $stmt->close();
+            // 只处理type为3且page_type不是guess的用户
+            if ($guesser['type'] == 3 && $guesser['page_type'] != 'guess') {
+                $sql = "UPDATE tb_user SET type = 6, room = NULL, last_active = NOW() WHERE id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("i", $guesser['id']);
+                $stmt->execute();
+                $stmt->close();
+                
+                // 记录日志
+                $logMessage = "用户 {" . $guesser['username'] . "} 因未响应被踢出房间 {" . $room . "}";
+                $sql = "INSERT INTO tb_logs (username, action, log_time) VALUES (?, ?, NOW())";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ss", $guesser['username'], $logMessage);
+                $stmt->execute();
+                $stmt->close();
+            }
         }
         
         // 4. 检查房间人数
-        $sql = "SELECT COUNT(*) as count FROM tb_users WHERE room = ?";
+        $sql = "SELECT COUNT(*) as count 
+                FROM tb_user u 
+                JOIN tb_room r ON u.id = r.user_id0 OR u.id = r.user_id1 
+                WHERE r.name = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $room);
         $stmt->execute();
@@ -97,7 +116,10 @@
         // 5. 如果房间人数只有一人，将该用户送回example room并重新匹配
         if ($roomCount == 1) {
             // 获取房间中剩余的用户
-            $sql = "SELECT id, username FROM tb_users WHERE room = ?";
+            $sql = "SELECT u.id, u.name as username 
+                    FROM tb_user u 
+                    JOIN tb_room r ON u.id = r.user_id0 OR u.id = r.user_id1 
+                    WHERE r.name = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("s", $room);
             $stmt->execute();
@@ -105,7 +127,7 @@
             $stmt->close();
             
             // 将剩余用户送回example room并重置类型为1
-            $sql = "UPDATE tb_users SET type = 1, room = NULL, last_active = NOW() WHERE id = ?";
+            $sql = "UPDATE tb_user SET type = 1, room = NULL, last_active = NOW() WHERE id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("i", $remainingUser['id']);
             $stmt->execute();

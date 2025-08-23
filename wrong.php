@@ -93,17 +93,19 @@
         var window_width=window.innerWidth;
         timer1=setInterval(checkUserCount,1000);    
         <?php 
-            $username=$_SESSION['username'];
+            // 优先使用user_id作为主要标识，username保留作为辅助显示
             $user_id = $_SESSION['user_id'];
+            $username=$_SESSION['username'];
             $room = $_SESSION['room'];
-            $rival = $_SESSION['rival'];
             $rival_id = $_SESSION['rival_id'];
+            $rival = $_SESSION['rival'];
             $first_user_id = $_SESSION['first_user_id'];
-            print("var username='$username';\n");
+            // 优先声明user_id，username保留作为辅助显示
             print("var user_id=$user_id;\n");
+            print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
-            print("var rival = '$rival';\n");
             print("var rival_id = $rival_id;\n");
+            print("var rival = '$rival'; // 保留作为辅助显示\n");
             print("var first_user_id = $first_user_id;\n");
         ?>
         function checkUserCount() {
@@ -121,13 +123,13 @@
                 form.method = 'post';
                 form.action = 'rest.php';
                 
-                // 添加表单字段
+                // 添加表单字段 - 优先使用user_id作为主要标识
                 var fields = [
-                    {name: 'username', value: username},
                     {name: 'user_id', value: user_id},
+                    {name: 'username', value: username},
                     {name: 'room', value: room},
-                    {name: 'rival', value: rival},
                     {name: 'rival_id', value: rival_id},
+                    {name: 'rival', value: rival},
                     {name: 'first_user_id', value: first_user_id}
                 ];
                 

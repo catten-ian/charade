@@ -17,27 +17,29 @@
     
     // 接收来自游戏页面的表单数据
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $username = $_POST['username'];
+        // 优先使用user_id作为主要标识，username保留作为辅助显示
         $user_id = $_POST['user_id'];
+        $username = $_POST['username'];
         $room = $_POST['room'];
-        $rival = $_POST['rival'];
         $rival_id = $_POST['rival_id'];
+        $rival = $_POST['rival'];
         $first_user_id = $_POST['first_user_id'];
         
-        // 保存会话变量
-        $_SESSION['username'] = $username;
+        // 保存会话变量 - 优先使用user_id作为主要标识
         $_SESSION['user_id'] = $user_id;
+        $_SESSION['username'] = $username; // 保留作为辅助显示
         $_SESSION['room'] = $room;
-        $_SESSION['rival'] = $rival;
         $_SESSION['rival_id'] = $rival_id;
+        $_SESSION['rival'] = $rival; // 保留作为辅助显示
         $_SESSION['first_user_id'] = $first_user_id;
     } else {
         // 如果不是POST请求，从会话中获取数据
-        $username = $_SESSION['username'];
+        // 优先使用user_id作为主要标识，username保留作为辅助显示
         $user_id = $_SESSION['user_id'];
+        $username = $_SESSION['username'];
         $room = $_SESSION['room'];
-        $rival = $_SESSION['rival'];
         $rival_id = $_SESSION['rival_id'];
+        $rival = $_SESSION['rival'];
         $first_user_id = $_SESSION['first_user_id'];
     }
     
@@ -183,13 +185,13 @@
                 form.method = 'post';
                 form.action = 'exampleroom2.php';
                 
-                // 添加表单字段
+                // 添加表单字段 - 优先使用user_id作为主要标识
                 var fields = [
-                    {name: 'username', value: username},
                     {name: 'user_id', value: user_id},
+                    {name: 'username', value: username},
                     {name: 'room', value: room},
-                    {name: 'rival', value: rival},
                     {name: 'rival_id', value: rival_id},
+                    {name: 'rival', value: rival},
                     {name: 'first_user_id', value: first_user_id},
                     {name: 'new_game', value: 'true'}
                 ];

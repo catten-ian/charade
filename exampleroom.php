@@ -2,9 +2,17 @@
     // Start the session
     session_start();
     //$_SESSION['postdata']=json_decode($_POST);
-    $_SESSION['username'] = $_POST['username'];
-    // 保存用户类型为1
-    $_SESSION['type'] = '1';
+    // 优先使用user_id作为主要标识
+    if (isset($_POST['username'])) {
+        $_SESSION['username'] = $_POST['username']; // 保留作为辅助显示
+    }
+    // 只有从login送来的或者type为3或4的用户才将其type更新为1
+    if (isset($_POST['from_login']) || (isset($_SESSION['type']) && (($_SESSION['type'] == '3') || ($_SESSION['type'] == '4')))) {
+        $_SESSION['type'] = '1';
+    } else if (isset($_POST['type'])) {
+        // 保留从POST传入的type值
+        $_SESSION['type'] = $_POST['type'];
+    }
 
     include "../config.inc";
 
@@ -28,15 +36,24 @@
         $stmt = mysqli_prepare($conn, "INSERT INTO tb_user(name) VALUES(?)");
         mysqli_stmt_bind_param($stmt, 's', $username);
         mysqli_stmt_execute($stmt);
+        // 获取新创建用户的ID
+        $user_id = mysqli_insert_id($conn);
+    } else {
+        // 获取现有用户的ID
+        $row = mysqli_fetch_assoc($result);
+        $user_id = $row['id'];
     }
     
     // 重置用户分数
-    $stmt = mysqli_prepare($conn, "UPDATE tb_user SET score = 0 WHERE name = ?");
-    mysqli_stmt_bind_param($stmt, 's', $username);
+    $stmt = mysqli_prepare($conn, "UPDATE tb_user SET score = 0 WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, 'i', $user_id);
     mysqli_stmt_execute($stmt);
     
     // 关闭预处理语句
     mysqli_stmt_close($stmt);
+    
+    // 保存user_id到会话中，优先使用user_id作为主要标识
+    $_SESSION['user_id'] = $user_id;
     
     $sql_select="SELECT name FROM tb_user WHERE name='$username'";
     $ret=mysqli_query($conn,$sql_select);
@@ -91,8 +108,8 @@
             <img src="./room5.svg" style="z-index:0; width:55vw;  object-fit:contain; position:absolute;" />
         </div>
         
-        <svg id="arcText" viewBox="0 0 600 200" style="position:absolute; top:45vh; ">
-            <path id="arcPath" d="M 245 130 A 25 25 0 0 1 355 130" fill="none" stroke="none" />
+        <svg id="arcText" viewBox="0 0 600 200" style="position:absolute; ">
+            <path id="arcPath" d="M 245 205 A 25 25 0 0 1 355 205" fill="none" stroke="none" />
             <text style="font-family: 'SourceHanSans-Normal'; text-anchor: middle; font-size: 18px; fill: #000;">
                 <textPath href="#arcPath" id="textPathElement"></textPath>
             </text>
@@ -191,11 +208,11 @@
         var timeCur;
         var Count1=0;
         var window_width=window.innerWidth;
-        <?php 
+        <?php
             $username=$_SESSION['username'];
-            $user_id = $_SESSION['user_id'];
-            print("var username='$username';\n") ;
-            print("var user_id='$user_id';\n") ;
+            $user_id=$_SESSION['user_id'];
+            print("var user_id=$user_id;\n") ;
+            print("var username='$username'; // 保留作为辅助显示\n") ;
         ?>
         var response={"ret_code":4};
         function encodeFormDataToUrlParams(formData) {
@@ -211,7 +228,7 @@
             xhr.open('POST', '/charade/paring.php');
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             var fmData=new FormData();
-            fmData.append('user_id',user_id);
+            fmData.append('username',username);
             xhr.send(encodeFormDataToUrlParams(fmData));
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {                    
@@ -223,31 +240,20 @@
                         clearInterval(timer1);
 
                         var form = document.createElement('form');
-                        form.method = 'post';
-                        form.action = 'exampleroom2.php';
-                        var fUsername = document.createElement('input');
-                        fUsername.type = 'hidden';
-                        fUsername.name = 'username';
-                        fUsername.value = response.username;
-                        form.appendChild(fUsername);
+                    form.method = 'post';
+                    form.action = 'exampleroom2.php';
+                    // 优先使用user_id作为主要标识
+                    var fUserId = document.createElement('input');
+                    fUserId.type = 'hidden';
+                    fUserId.name = 'user_id';
+                    fUserId.value = response.user_id;
+                    form.appendChild(fUserId);
 
-                        var fUserId = document.createElement('input');
-                        fUserId.type = 'hidden';
-                        fUserId.name = 'user_id';
-                        fUserId.value = response.user_id;
-                        form.appendChild(fUserId);
-
-                        var fRivalId = document.createElement('input');
-                        fRivalId.type = 'hidden';
-                        fRivalId.name = 'rival';
-                        fRivalId.value = response.rival_id;
-                        form.appendChild(fRivalId);
-
-                        var fFirstUserId = document.createElement('input');
-                        fFirstUserId.type = 'hidden';
-                        fFirstUserId.name = 'first_user_id';
-                        fFirstUserId.value = response.first_user_id;
-                        form.appendChild(fFirstUserId);
+                    var fUsername = document.createElement('input');
+                    fUsername.type = 'hidden';
+                    fUsername.name = 'username';
+                    fUsername.value = response.username; // 保留作为辅助显示
+                    form.appendChild(fUsername);
 
                         var fRoom = document.createElement('input');
                         fRoom.type = 'hidden';

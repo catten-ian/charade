@@ -2,24 +2,18 @@
     // Start the session
     session_start();
     
-    // 接收来自choose.php的表单数据
+    // 接收来自choose.php的表单数据 - 优先使用user_id作为主要标识
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $username = $_POST['username'];
         $user_id = $_POST['user_id'];
+        $username = $_POST['username'];
         $room = $_POST['room'];
-        $rival = $_POST['rival'];
-        $rival_id = $_POST['rival_id'];
-        $first_user_id = $_POST['first_user_id'];
         $role = $_POST['role'];
         $selected_word = $_POST['selected_word'];
         
         // 保存会话变量
-        $_SESSION['username'] = $username;
         $_SESSION['user_id'] = $user_id;
+        $_SESSION['username'] = $username;
         $_SESSION['room'] = $room;
-        $_SESSION['rival'] = $rival;
-        $_SESSION['rival_id'] = $rival_id;
-        $_SESSION['first_user_id'] = $first_user_id;
         $_SESSION['role'] = $role;
         $_SESSION['selected_word'] = $selected_word;
         
@@ -52,12 +46,9 @@
         mysqli_close($conn);
     } else {
         // 如果不是POST请求，从会话中获取数据
-        $username = $_SESSION['username'];
         $user_id = $_SESSION['user_id'];
+        $username = $_SESSION['username'];
         $room = $_SESSION['room'];
-        $rival = $_SESSION['rival'];
-        $rival_id = $_SESSION['rival_id'];
-        $first_user_id = $_SESSION['first_user_id'];
         $role = $_SESSION['role'];
         $selected_word = $_SESSION['selected_word'];
     }
@@ -157,12 +148,9 @@
         var startTimeInMs = timeObj.getTime();
         var Count1 = 0;
         var window_width = window.innerWidth;
-        var username = '<?php echo $username; ?>';
         var user_id = <?php echo $user_id; ?>;
+        var username = '<?php echo $username; ?>'; // 保留作为辅助显示
         var room = '<?php echo $room; ?>';
-        var rival = '<?php echo $rival; ?>';
-        var rival_id = <?php echo $rival_id; ?>;
-        var first_user_id = <?php echo $first_user_id; ?>;
         var selected_word = '<?php echo $selected_word; ?>';
         
         // 定时检查
@@ -184,7 +172,7 @@
                     }
                 }
             };
-            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + user_id);
+            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + encodeURIComponent(user_id) + '&username=' + encodeURIComponent(username));
         }
         
         // 每2秒检查一次猜测者状态
@@ -214,14 +202,11 @@
                 form.method = 'post';
                 form.action = 'wrong.php';
                 
-                // 添加表单字段
+                // 添加表单字段 - 优先使用user_id作为主要标识
                 var fields = [
-                    {name: 'username', value: username},
                     {name: 'user_id', value: user_id},
+                    {name: 'username', value: username}, // 保留作为辅助显示
                     {name: 'room', value: room},
-                    {name: 'rival', value: rival},
-                    {name: 'rival_id', value: rival_id},
-                    {name: 'first_user_id', value: first_user_id},
                     {name: 'selected_word', value: selected_word}
                 ];
                 

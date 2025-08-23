@@ -33,14 +33,14 @@
             // 用户猜对了，更新房间状态和获胜者
             $sql = "UPDATE tb_room SET game_status = 'completed', winner_id = ? WHERE room = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ss", $user_id, $room);
+            $stmt->bind_param("is", $user_id, $room);  // user_id是整数类型
             $stmt->execute();
             $stmt->close();
             
             // 记录用户猜对的信息
             $sql = "INSERT INTO tb_game_record (room, user_id, action, timestamp) VALUES (?, ?, 'correct_guess', NOW())";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ss", $room, $user_id);
+            $stmt->bind_param("si", $room, $user_id);  // user_id是整数类型
             $stmt->execute();
             $stmt->close();
             break;
@@ -49,7 +49,7 @@
             // 用户3次全猜错了，记录信息
             $sql = "INSERT INTO tb_game_record (room, user_id, action, timestamp) VALUES (?, ?, 'all_wrong', NOW())";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ss", $room, $user_id);
+            $stmt->bind_param("si", $room, $user_id);  // user_id是整数类型
             $stmt->execute();
             $stmt->close();
             
