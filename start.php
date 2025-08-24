@@ -72,17 +72,11 @@
             $username=$_SESSION['username'];
             $user_id = $_SESSION['user_id'];
             $room = $_SESSION['room'];
-            $rival = $_SESSION['rival'];
-            $rival_id = $_SESSION['rival_id'];
-            $first_user_id = $_SESSION['first_user_id'];
             $role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
             
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
-            print("var rival_id = $rival_id;\n");
-            print("var rival = '$rival'; // 保留作为辅助显示\n");
-            print("var first_user_id = $first_user_id;\n");
             print("var role = '$role';\n");
         ?>
         
@@ -118,21 +112,9 @@
                 {
                     window.location.href="choose.php";
                 }
-                else if(role === 'guesser')
-                {
-                    window.location.href="waiting.php";
-                }
                 else
                 {
-                    // 如果没有角色信息，使用默认逻辑
-                    if(user_id==first_user_id)
-                    {
-                        window.location.href="choose.php";
-                    }
-                    else
-                    {
-                        window.location.href="waiting.php";
-                    }
+                    window.location.href="waiting.php";
                 }
             }   
         }

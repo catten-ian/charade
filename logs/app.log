@@ -6057,3 +6057,16 @@
 [2025-08-22 16:30:10] [INFO] [127.0.0.1] [catten] 用户已在房间中 {"user_id":"8","room_name":"room3","room_status":2}
 [2025-08-22 16:30:10] [INFO] [127.0.0.1] [catten] 更新用户房间状态成功 {"user_id":"8","in_room":1}
 [2025-08-22 16:30:10] [INFO] [127.0.0.1] [catten] 匹配成功 {"user_id":"8","rival_id":"14","room_name":"room3"}
+[2025-08-23 10:54:31] [DEBUG] [127.0.0.1] [catten] username data: "catten"
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 进入匹配页面 {"username":"catten","user_id":"8"}
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 数据库连接成功 {"user_id":"8"}
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 开始匹配流程 {"username":"catten","user_id":"8"}
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 用户名转义完成 {"username":"catten","user_id":"8"}
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 用户已存在 {"username":"catten","user_id":"8"}
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 获取用户ID成功 {"username":"catten","user_id":"8"}
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 检查用户房间状态 {"user_id":"8"}
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 查询用户所在房间 {"user_id":"8","sql":"SELECT id,name, user_cnt, user_id0,user_id1 from tb_room WHERE user_id0=8 or user_id1=8 order by user_cnt DESC"}
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 房间查询结果 {"user_id":"8","room_count":1}
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 用户已在房间中 {"user_id":"8","room_name":"room3","room_status":2}
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 更新用户房间状态成功 {"user_id":"8","in_room":1}
+[2025-08-23 10:54:31] [INFO] [127.0.0.1] [catten] 匹配成功 {"user_id":"8","rival_id":"14","room_name":"room3"}

@@ -166,40 +166,6 @@
         });
         </script>
     </div>
-        <!--<table style="position:relative;left:30vw;top:-60vh;">
-            <tr style="scale:0.8"><td><img src="./avatarexample.png" id="div_img1" style="position:relative;left:0vw;top:80vh;" /></td></tr>
-            <tr style="position:relative;"><td>
-                <div id="div_img2" style="position:relative;top=80vh;">
-                    <svg width="200" height="400" style="margin:auto;left:80px">
-                        <path id="curve" d="M10 80 Q 95 10 180 80" style="opacity:0%"/>
-                        <text style="font-size:calc(2vw);margin:auto;">
-                        <textPath xlink:href="#curve">&#8194; &ensp;
-                            <?php 
-                                // $name_len=strlen($_SESSION['username']);
-                                // $name_out="";
-                                // if ( $name_len < 3 ) 
-                                // {
-                                //     $name_out="&#8194; &ensp;".$_SESSION['username'];
-                                // }
-                                // elseif ( $name_len < 5 )
-                                // {
-                                //     $name_out="&#8194; &ensp;".$_SESSION['username'];
-                                // } 
-                                // else 
-                                // { 
-                                //     $name_out=$_SESSION['username'];
-                                // }
-                                // echo $name_out; ?>
-                            </textPath>
-                        </text>
-                  </svg>
-                </div> 
-            </td></tr>
-        </table> -->
-       <!-- <img src="./room5.svg" style="z-index:-1;left:0;top:0;width:70%;height:70%;justify-content: center;align-items: center" /> 
-        
-        
-    </div>-->
     
       
     <script >
@@ -240,20 +206,20 @@
                         clearInterval(timer1);
 
                         var form = document.createElement('form');
-                    form.method = 'post';
-                    form.action = 'exampleroom2.php';
-                    // 优先使用user_id作为主要标识
-                    var fUserId = document.createElement('input');
-                    fUserId.type = 'hidden';
-                    fUserId.name = 'user_id';
-                    fUserId.value = response.user_id;
-                    form.appendChild(fUserId);
+                        form.method = 'post';
+                        form.action = 'exampleroom2.php';
+                        // 优先使用user_id作为主要标识
+                        var fUserId = document.createElement('input');
+                        fUserId.type = 'hidden';
+                        fUserId.name = 'user_id';
+                        fUserId.value = response.user_id;
+                        form.appendChild(fUserId);
 
-                    var fUsername = document.createElement('input');
-                    fUsername.type = 'hidden';
-                    fUsername.name = 'username';
-                    fUsername.value = response.username; // 保留作为辅助显示
-                    form.appendChild(fUsername);
+                        var fUsername = document.createElement('input');
+                        fUsername.type = 'hidden';
+                        fUsername.name = 'username';
+                        fUsername.value = response.username; // 保留作为辅助显示
+                        form.appendChild(fUsername);
 
                         var fRoom = document.createElement('input');
                         fRoom.type = 'hidden';
@@ -261,26 +227,22 @@
                         fRoom.value = response.room;
                         form.appendChild(fRoom);
 
-                        // 确保rival_id存在
-                        var fRivalId = document.createElement('input');
-                        fRivalId.type = 'hidden';
-                        fRivalId.name = 'rival_id';
-                        fRivalId.value = response.rival_id || 0;
-                        form.appendChild(fRivalId);
-
-                        // 确保rival存在
-                        var fRival = document.createElement('input');
-                        fRival.type = 'hidden';
-                        fRival.name = 'rival';
-                        fRival.value = response.rival || '';
-                        form.appendChild(fRival);
-
-                        // 确保first_user_id存在
+                        // 优先从房间成员列表中获取第一个用户信息
+                        // 如果response中没有提供first_user_id，则默认为当前用户ID
                         var fFirstUserId = document.createElement('input');
                         fFirstUserId.type = 'hidden';
                         fFirstUserId.name = 'first_user_id';
                         fFirstUserId.value = response.first_user_id || response.user_id;
                         form.appendChild(fFirstUserId);
+
+                        // 传递房间成员信息（如果有）
+                        if (response.room && response.room.members && response.room.members.length > 0) {
+                            var fMembers = document.createElement('input');
+                            fMembers.type = 'hidden';
+                            fMembers.name = 'room_members';
+                            fMembers.value = JSON.stringify(response.room.members);
+                            form.appendChild(fMembers);
+                        }
                           
                         document.body.appendChild(form);
                         form.submit();

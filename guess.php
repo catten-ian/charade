@@ -100,12 +100,6 @@
             if (isset($_POST['room'])) {
                 $_SESSION['room'] = $_POST['room'];
             }
-            if (isset($_POST['rival'])) {
-                $_SESSION['rival'] = $_POST['rival'];
-            }
-            if (isset($_POST['rival_id'])) {
-                $_SESSION['rival_id'] = $_POST['rival_id'];
-            }
             if (isset($_POST['first_user_id'])) {
                 $_SESSION['first_user_id'] = $_POST['first_user_id'];
             }
@@ -116,9 +110,14 @@
             $user_id = $_SESSION['user_id'];
             $username = $_SESSION['username']; // 保留作为辅助显示
             $room = $_SESSION['room'];
-            $rival = $_SESSION['rival'];
-            $rival_id = $_SESSION['rival_id'];
             $first_user_id = $_SESSION['first_user_id'];
+            // 优先从房间成员列表中获取第一个用户信息
+            $first_user_name = '';
+            if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
+                $first_user_id = $_SESSION['room']['members'][0]['id'];
+                $first_user_name = $_SESSION['room']['members'][0]['name'];
+            }
+            
             // 从会话中获取猜测相关数据
             $guess_count = isset($_SESSION['guess_count']) ? $_SESSION['guess_count'] : 0;
             $guess_history = isset($_SESSION['guess_history']) ? json_encode($_SESSION['guess_history']) : '[]';
@@ -128,8 +127,6 @@
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
-            print("var rival_id = $rival_id;\n");
-            print("var rival = '$rival'; // 保留作为辅助显示\n");
             print("var first_user_id = $first_user_id;\n");
             print("var guess_count = $guess_count;\n");
             print("var guess_history = $guess_history;\n");
@@ -293,8 +290,6 @@
                     {name: 'user_id', value: user_id},
                     {name: 'username', value: username},
                     {name: 'room', value: room},
-                    {name: 'rival_id', value: rival_id},
-                    {name: 'rival', value: rival},
                     {name: 'first_user_id', value: first_user_id},
                     {name: 'role', value: 'guesser'},
                     {name: 'guess', value: userGuess}

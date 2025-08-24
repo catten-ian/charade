@@ -138,11 +138,8 @@ if ($room_cnt >= 1) {
     class RetClass {
         public $ret_code = 0;
         public $username = "";
-        public $rival = "";
         public $user_id = 0;
-        public $rival_id = 0;
         public $room = "";
-        public $first_user_id = 0;
         public $in_room = false; // 是否在房间中
         public $room_status = 0; // 房间状态 0:不在 1:等待 2:游戏中
     };
@@ -155,26 +152,17 @@ if ($room_cnt >= 1) {
             $jret->username = $username;
             $jret->user_id = $user_id;
             $jret->room = $row[1];
-            $jret->first_user_id = $row[3];
             $jret->in_room = true;
             $jret->room_status = 2;
 
-            if ($user_id == $row[3]) {
-                $jret->rival_id = $row[4];
-            } else {
-                $jret->rival_id = $row[3];
-            }
-
-            $sql_rival = "SELECT name from tb_user WHERE id=" . $jret->rival_id;
-            $ret_rival = mysqli_query($conn, $sql_rival);
-            $row_rival = mysqli_fetch_row($ret_rival);
-            $jret->rival = $row_rival[0];
-            // 更新对手为在房间状态
-            mysqli_query($conn, "UPDATE tb_user SET in_room=1 WHERE id=" . $jret->rival_id);
+            // 从members数组获取首个用户信息
+            $first_user = $_SESSION['room']['members'][0];
+            $first_user_id = $first_user['id'];
+            // 不再更新对手状态，因为我们已删除rival相关属性
             
             // 只记录特定用户ID的日志
             if (shouldLog($user_id)) {
-                Logger::info("匹配成功", ["user_id" => $user_id, "rival_id" => $jret->rival_id, "room_name" => $row[1]]);
+                Logger::info("匹配成功", ["user_id" => $user_id, "room_id" => $row[0], "room_name" => $row[1], "room_user_ids" => [$row[3], $row[4]]]);
             }
                 echo json_encode($jret, JSON_UNESCAPED_UNICODE);
         } else {
@@ -194,20 +182,16 @@ if ($room_cnt >= 1) {
                 $jret->username = $username;
                 $jret->user_id = $user_id;
                 $jret->room = $row[1];
-                $jret->rival_id = $row[3];
-                $jret->first_user_id = $row[3];
                 $jret->in_room = true;
                 $jret->room_status = 2;
 
-                $sql_rival = "SELECT name from tb_user WHERE id=" . $jret->rival_id;
-                $ret_rival = mysqli_query($conn, $sql_rival);
-                $row_rival = mysqli_fetch_row($ret_rival);
-                $jret->rival = $row_rival[0];
+                // 从members数组获取首个用户信息
+                $first_user = $_SESSION['room']['members'][0];
+                $first_user_id = $first_user['id'];
 
                 $sql_update = "UPDATE tb_room SET user_cnt=2, user_id1=$user_id WHERE id=" . $row[0];
                 mysqli_query($conn, $sql_update);
-                // 更新对手为在房间状态
-                mysqli_query($conn, "UPDATE tb_user SET in_room=1 WHERE id=" . $jret->rival_id);
+                // 不再更新对手状态，因为我们已删除rival相关属性
                 
                 echo json_encode($jret, JSON_UNESCAPED_UNICODE);
             }
@@ -237,8 +221,42 @@ if (shouldLog($user_id)) {
             echo json_encode($jret, JSON_UNESCAPED_UNICODE);
         } else {
             $row = mysqli_fetch_row($ret);
-            $_SESSION['room'] = $row[1];
-            $_SESSION['room_id'] = $row[0];
+            // 初始化成员数组
+            $members = [];
+            $member_indices = [3, 4, 17, 18, 19, 20, 21, 22, 23, 24];
+            foreach ($member_indices as $idx) {
+                $id = $row[$idx];
+                if ($id === null) {
+                    $members[] = ['id' => null, 'name' => null, 'score' => 0];
+                } else {
+                    // 查询用户名称
+                    $sql = "SELECT name FROM tb_user WHERE id = $id";
+                    $ret = mysqli_query($conn, $sql);
+                    $name_row = mysqli_fetch_row($ret);
+                    $name = $name_row ? $name_row[0] : null;
+                    $members[] = ['id' => $id, 'name' => $name, 'score' => 0];
+                }
+            }
+
+            // 重构后的房间结构，优先使用members数组存储用户信息
+            $_SESSION['room'] = [
+                'name' => $row[1],
+                'id' => $row[0],
+                'user_cnt' => $row[2],
+                'type' => $row[5],
+                'word_type' => $row[6],
+                'level_type' => $row[7],
+                'max_people' => $row[8],
+                'least_people' => $row[9],
+                'personal_try' => $row[10],
+                'team_try' => $row[11],
+                'match_random' => $row[12],
+                'vocab_custom_count' => $row[13],
+                'vocab_custom' => $row[14],
+                'winner' => $row[15],
+                'word_id' => $row[16],
+                'members' => $members
+            ];
             // 只记录特定用户ID的日志
             if (shouldLog($user_id)) {
                 Logger::info("找到空房间", ["user_id" => $user_id, "room_name" => $_SESSION['room'], "room_id" => $_SESSION['room_id']]);
@@ -265,21 +283,17 @@ if (shouldLog($user_id)) {
                 $jret->username = $username;
                 $jret->user_id = $user_id;
                 $jret->room = $row[1];
-                $jret->rival_id = $row[3];
-                $jret->first_user_id = $row[3];
                 $jret->in_room = true;
                 $jret->room_status = 2;
 
+                // 从members数组获取首个用户信息
+                $first_user = $_SESSION['room']['members'][0];
+                $first_user_id = $first_user['id'];
+
                 $sql_update = "UPDATE tb_room SET user_cnt=2, user_id1=$user_id WHERE id=" . $row[0];
                 mysqli_query($conn, $sql_update);
-                // 更新当前用户和对手为在房间状态
+                // 更新当前用户为在房间状态
                 mysqli_query($conn, "UPDATE tb_user SET in_room=1 WHERE id=$user_id");
-                mysqli_query($conn, "UPDATE tb_user SET in_room=1 WHERE id=" . $jret->rival_id);
-
-                $sql_rival = "SELECT name from tb_user WHERE id=" . $jret->rival_id;
-                $ret_rival = mysqli_query($conn, $sql_rival);
-                $row_rival = mysqli_fetch_row($ret_rival);
-                $jret->rival = $row_rival[0];
                 
                 echo json_encode($jret, JSON_UNESCAPED_UNICODE);
             }

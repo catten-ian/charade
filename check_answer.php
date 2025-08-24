@@ -19,8 +19,6 @@
     $user_id = $_POST['user_id'];
     $username = $_POST['username'];
     $room = $_POST['room'];
-    $rival_id = $_POST['rival_id'];
-    $rival = $_POST['rival'];
     $first_user_id = $_POST['first_user_id'];
     $role = $_POST['role'];
     $user_guess = $_POST['guess'];
@@ -29,10 +27,15 @@
     $_SESSION['user_id'] = $user_id;
     $_SESSION['username'] = $username; // 保留作为辅助显示
     $_SESSION['room'] = $room;
-    $_SESSION['rival_id'] = $rival_id;
-    $_SESSION['rival'] = $rival; // 保留作为辅助显示
     $_SESSION['first_user_id'] = $first_user_id;
     $_SESSION['role'] = $role;
+    
+    // 优先从房间成员列表中获取第一个用户信息
+    $first_user_name = '';
+    if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
+        $first_user_id = $_SESSION['room']['members'][0]['id'];
+        $first_user_name = $_SESSION['room']['members'][0]['name'];
+    }
     
     // 初始化猜测次数和历史记录
     if (!isset($_SESSION['guess_count'])) {

@@ -138,7 +138,6 @@
         var selectedWord = "<?php echo $word1; ?>"; // 默认选择word1
         var isSelectionComplete = false;
         var room = "<?php echo isset($_SESSION['room']) ? $_SESSION['room'] : ''; ?>";
-        var rivalId = "<?php echo isset($_SESSION['rival_id']) ? $_SESSION['rival_id'] : ''; ?>";
         var hasSelected = false;
         
         // 开始倒计时

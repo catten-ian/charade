@@ -1,24 +1,18 @@
 <?php
     // Start the session
     session_start();
-    // 从POST请求获取数据并设置到会话中 - 优先使用user_id作为主要标识
-    if (isset($_POST['user_id'])) {
-        $_SESSION['user_id'] = $_POST['user_id'];
-    }
-    if (isset($_POST['username'])) {
-        $_SESSION['username'] = $_POST['username']; // 保留作为辅助显示
-    }
-    if (isset($_POST['room'])) {
-        $_SESSION['room'] = $_POST['room'];
-    }
-    if (isset($_POST['rival'])) {
-        $_SESSION['rival'] = $_POST['rival'];
-    }
-    if (isset($_POST['rival_id'])) {
-        $_SESSION['rival_id'] = $_POST['rival_id'];
-    }
-    if (isset($_POST['first_user_id'])) {
-        $_SESSION['first_user_id'] = $_POST['first_user_id'];
+    if (isset($_SESSION['cnt'])) {
+        $cnt = intval($_SESSION['cnt']);
+        for ($i = 1; $i <= $cnt; $i++) {
+            $postKey = 'username' . $i;
+            if (isset($_POST[$postKey])) {
+                $_SESSION[$postKey] = $_POST[$postKey];
+            }
+            $postKey = 'user_id' . $i;
+            if (isset($_POST[$postKey])) {
+                $_SESSION[$postKey] = $_POST[$postKey];
+            }
+        }
     }
 ?>
 <!DOCTYPE html>
@@ -122,7 +116,7 @@
             </svg>
 
             <script>
-                <?php echo "var text_out1 = '".$_SESSION['username']."';"; ?>
+                <?php echo "var text_out1 = '".$_SESSION['username1']."';"; ?>
                 window.addEventListener('load', () => updateArcText(text_out1, 'textPathElement1', 'user1_arcPath',220,50));
                 window.addEventListener('resize', () => {
                     const text = document.getElementById('textPathElement1')?.textContent || text_out1;
@@ -144,7 +138,7 @@
             </svg>
 
             <script>
-                <?php echo "var text_out2 = '" . $_SESSION['rival'] . "';"; ?>
+                <?php echo "var text_out2 = '" . $_SESSION['username2'] . "';"; ?>
                 window.addEventListener('load', () => updateArcText(text_out2, 'textPathElement2', 'user2_arcPath',220,50));
                 window.addEventListener('resize', () => {
                     const text = document.getElementById('textPathElement2')?.textContent || text_out2;
@@ -152,28 +146,7 @@
                 });
             </script>
         </div>
-        <!-- <div id="div_user2" style="display:flex; z-index:20;">
-            <div style="position:relative; display:flex; justify-content:center; align-items:center; z-index:20;">
-                <img src="./avatarexample.png" id="div_img1" style="z-index:1; width:17vw; object-fit:contain;transform: translateY(-9vh);" />
-                <img src="./room5.svg" style="z-index:0; width:55vw;  object-fit:contain; position:absolute;" />
-            </div>
-            
-            <svg id="user2_arcText" viewBox="0 0 600 200" style="position:absolute; top=3vh;bottom:6vh;transform:translateX(-40%); z-index:30; pointer-events:none;overflow:visible;">
-                <path id="user2_arcPath" d="" fill="none" stroke="none" />
-                <text style="font-family: sans-serif; text-anchor: middle; fill: white; dominant-baseline: middle; z-index:30;overflow:visible;">
-                    <textPath href="#user2_arcPath" id="textPathElement2"></textPath>
-                </text>
-            </svg>
-
-            <script>
-                <?php echo "var text_out2 = '".$_SESSION['rival']."';"; ?>
-                window.addEventListener('load', () => updateArcText(text_out2, 'textPathElement2', 'user2_arcPath',200,-30));
-                window.addEventListener('resize', () => {
-                    const text = document.getElementById('textPathElement2')?.textContent || text_out2;
-                    updateArcText(text, 'textPathElement2', 'user2_arcPath', 200,-30);
-                });
-            </script>
-        </div> -->
+        
     </div>
 
     <script >
@@ -189,16 +162,21 @@
             $user_id = $_SESSION['user_id'];
             $username=$_SESSION['username'];
             $room = $_SESSION['room'];
-            $rival_id = $_SESSION['rival_id'];
-            $rival = $_SESSION['rival'];
             $first_user_id =$_SESSION['first_user_id'];
+            
+            // 优先从房间成员列表中获取第一个用户信息
+            $first_user_name = '';
+            if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
+                $first_user_id = $_SESSION['room']['members'][0]['id'];
+                $first_user_name = $_SESSION['room']['members'][0]['name'];
+            }
+            
             // 优先声明user_id，username保留作为辅助显示
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
-            print("var rival_id = $rival_id;\n");
-            print("var rival = '$rival'; // 保留作为辅助显示\n");
             print("var first_user_id = $first_user_id;\n");
+            print("var first_user_name = '$first_user_name';\n");
         ?>
         
         // 等待5秒后自动开始游戏
