@@ -15,20 +15,23 @@
     // 设置字符集
     mysqli_set_charset($conn, 'utf8');
     
-    // 接收表单数据 - 优先使用user_id作为主要标识
-    $user_id = $_POST['user_id'];
-    $username = $_POST['username'];
-    $room = $_POST['room'];
-    $first_user_id = $_POST['first_user_id'];
-    $role = $_POST['role'];
-    $user_guess = $_POST['guess'];
+    // 从SESSION中获取数据
+    $user_id = $_SESSION['user_id'];
+    $username = $_SESSION['username']; // 保留作为辅助显示
+    $room = $_SESSION['room'];
+    $role = $_SESSION['role'];
+    $user_guess = $_SESSION['current_guess']; // 从之前保存的SESSION中获取猜测
     
-    // 保存会话变量
-    $_SESSION['user_id'] = $user_id;
-    $_SESSION['username'] = $username; // 保留作为辅助显示
-    $_SESSION['room'] = $room;
+    // 优先从房间成员列表中获取第一个用户信息
+    $first_user_id = '';
+    $first_user_name = '';
+    if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
+        $first_user_id = $_SESSION['room']['members'][0]['id'];
+        $first_user_name = $_SESSION['room']['members'][0]['name'];
+    }
+    
+    // 保存first_user_id到SESSION
     $_SESSION['first_user_id'] = $first_user_id;
-    $_SESSION['role'] = $role;
     
     // 优先从房间成员列表中获取第一个用户信息
     $first_user_name = '';

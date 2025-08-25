@@ -2,22 +2,20 @@
     // Start the session
     session_start();
     
-    // 接收来自choose.php的表单数据 - 优先使用user_id作为主要标识
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $user_id = $_POST['user_id'];
-        $username = $_POST['username'];
-        $room = $_POST['room'];
-        $role = $_POST['role'];
-        $selected_word = $_POST['selected_word'];
+    // 从SESSION中获取数据 - 优先使用user_id作为主要标识
+    $user_id = $_SESSION['user_id'];
+    $username = $_SESSION['username'];
+    $room = $_SESSION['room'];
+    $role = $_SESSION['role'];
+    
+    // 检查是否通过POST接收到selected_word（从choose.php页面跳转时）
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selectedWordFinal'])) {
+        $selected_word = $_POST['selectedWordFinal'];
         
         // 保存会话变量
-        $_SESSION['user_id'] = $user_id;
-        $_SESSION['username'] = $username;
-        $_SESSION['room'] = $room;
-        $_SESSION['role'] = $role;
         $_SESSION['selected_word'] = $selected_word;
         
-        // 这里可以将选择的词语保存到数据库中，供guess.php页面获取
+        // 将选择的词语保存到数据库中，供guess.php页面获取
         include '../config.inc';
         $conn = mysqli_connect('localhost', $db_user, $db_password, $db_name, $db_port);
         if (mysqli_connect_errno()) {
@@ -45,12 +43,8 @@
         
         mysqli_close($conn);
     } else {
-        // 如果不是POST请求，从会话中获取数据
-        $user_id = $_SESSION['user_id'];
-        $username = $_SESSION['username'];
-        $room = $_SESSION['room'];
-        $role = $_SESSION['role'];
-        $selected_word = $_SESSION['selected_word'];
+        // 如果不是POST请求或没有selectedWordFinal，从会话中获取selected_word
+        $selected_word = isset($_SESSION['selected_word']) ? $_SESSION['selected_word'] : '';
     }
 ?>
 <!DOCTYPE html>
@@ -197,30 +191,8 @@
                 clearInterval(timer1);
                 console.log("3分钟时间到，游戏结束");
                 
-                // 创建表单并提交到错误页面
-                var form = document.createElement('form');
-                form.method = 'post';
-                form.action = 'wrong.php';
-                
-                // 添加表单字段 - 优先使用user_id作为主要标识
-                var fields = [
-                    {name: 'user_id', value: user_id},
-                    {name: 'username', value: username}, // 保留作为辅助显示
-                    {name: 'room', value: room},
-                    {name: 'selected_word', value: selected_word}
-                ];
-                
-                // 创建并添加所有隐藏字段
-                fields.forEach(function(field) {
-                    var input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = field.name;
-                    input.value = field.value;
-                    form.appendChild(input);
-                });
-                
-                document.body.appendChild(form);
-                form.submit();
+                // 直接跳转到wrong.php，利用SESSION中存储的信息
+                window.location.href = 'wrong.php';
             }
         }
     </script>

@@ -59,7 +59,6 @@
     $ret=mysqli_query($conn,$sql_select);
     $row=mysqli_fetch_array($ret);
     if($username==$row[0]) {
-
     }
     else {
         $sql_insert="INSERT INTO tb_user(name) VALUES('$username')";

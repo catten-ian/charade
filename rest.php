@@ -146,23 +146,29 @@
         var window_width = window.innerWidth;
         timer1 = setInterval(checkUserCount, 1000);    
         <?php 
-            // 优先使用user_id作为主要标识，username保留作为辅助显示
+            // 从SESSION中获取数据
             $user_id = $_SESSION['user_id'];
-    $username = $_SESSION['username'];
-    $room = $_SESSION['room'];
-    $first_user_id = $_SESSION['first_user_id'];
-    
-    // 优先从房间成员列表中获取第一个用户信息
-    $first_user_name = '';
-    if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
-        $first_user_id = $_SESSION['room']['members'][0]['id'];
-        $first_user_name = $_SESSION['room']['members'][0]['name'];
-    }
+            $username = $_SESSION['username'];
+            $room = $_SESSION['room'];
+            $role = $_SESSION['role'];
+            
+            // 优先从房间成员列表中获取第一个用户信息
+            $first_user_id = '';
+            $first_user_name = '';
+            if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
+                $first_user_id = $_SESSION['room']['members'][0]['id'];
+                $first_user_name = $_SESSION['room']['members'][0]['name'];
+            }
+            
+            // 保存first_user_id到SESSION
+            $_SESSION['first_user_id'] = $first_user_id;
+            
             // 优先声明user_id，username保留作为辅助显示
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
             print("var first_user_id = $first_user_id;\n");
+            print("var role = '$role';\n");
         ?>
         function checkUserCount() {
             console.log("Checking user count");
@@ -203,32 +209,22 @@
                 
                 console.log("轮次: " + roundCount + "，目标页面: " + targetPage);
                 
-                // 创建表单并提交到目标页面
-                var form = document.createElement('form');
-                form.method = 'post';
-                form.action = targetPage;
+                // 计算新角色
+                var newRole = '';
+                if (roundCount % 2 == 0) {
+                    // 偶数轮，角色交换
+                    newRole = isFirstUser ? 'guesser' : 'chooser';
+                } else {
+                    // 奇数轮，角色保持不变
+                    newRole = isFirstUser ? 'chooser' : 'guesser';
+                }
                 
-                // 添加表单字段 - 优先使用user_id作为主要标识
-                var fields = [
-                    {name: 'user_id', value: user_id},
-                    {name: 'username', value: username},
-                    {name: 'room', value: room},
-                    {name: 'first_user_id', value: first_user_id},
-                    {name: 'round_count', value: round_count},
-                    {name: 'role', value: newRole}
-                ];
+                // 保存轮次计数和新角色到localStorage
+                localStorage.setItem('roundCount', roundCount.toString());
+                localStorage.setItem('currentRole', newRole);
                 
-                // 创建并添加所有隐藏字段
-                fields.forEach(function(field) {
-                    var input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = field.name;
-                    input.value = field.value;
-                    form.appendChild(input);
-                });
-                
-                document.body.appendChild(form);
-                form.submit();
+                // 直接跳转到目标页面，利用SESSION中存储的信息
+                window.location.href = targetPage;
             }
         }
     </script>

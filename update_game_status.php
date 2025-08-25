@@ -3,22 +3,24 @@
     session_start();
     
     // 数据库连接配置
+    include '../config.inc';
     $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "charade";
+    $username = $db_user;
+    $password = $db_password;
+    $dbname = $db_name;
+    $db_port = $db_port;
     
     // 创建数据库连接
-    $conn = new mysqli($servername, $username, $password, $dbname);
+    $conn = new mysqli($servername, $username, $password, $dbname, $db_port);
     
     // 检查连接是否成功
     if ($conn->connect_error) {
         die("数据库连接失败: " . $conn->connect_error);
     }
     
-    // 获取请求参数
-    $room = $_POST['room'] ?? '';
-    $user_id = $_POST['user_id'] ?? '';
+    // 优先从SESSION获取参数，其次从POST获取
+    $room = isset($_SESSION['room']) ? $_SESSION['room'] : ($_POST['room'] ?? '');
+    $user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : (isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0);
     $status = $_POST['status'] ?? '';
     
     // 验证必要参数是否存在
@@ -31,7 +33,7 @@
     switch ($status) {
         case 'correct_guess':
             // 用户猜对了，更新房间状态和获胜者
-            $sql = "UPDATE tb_room SET game_status = 'completed', winner_id = ? WHERE room = ?";
+            $sql = "UPDATE tb_room SET game_status = 'completed', winner_id = ? WHERE name = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("is", $user_id, $room);  // user_id是整数类型
             $stmt->execute();
@@ -67,7 +69,7 @@
             // 假设房间中有2名玩家，1名描述者，1名猜测者
             if ($row['wrong_count'] == 1) {
                 // 所有猜测者都猜错了，更新房间状态
-                $sql = "UPDATE tb_room SET game_status = 'completed', winner_id = NULL WHERE room = ?";
+                $sql = "UPDATE tb_room SET game_status = 'completed', winner_id = NULL WHERE name = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("s", $room);
                 $stmt->execute();

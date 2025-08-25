@@ -280,32 +280,17 @@
                 isGuessing = true;
                 console.log('用户猜测:', userGuess);
                 
-                // 创建表单并提交到验证页面
-                var form = document.createElement('form');
-                form.method = 'post';
-                form.action = 'check_answer.php';
-                
-                // 添加表单字段 - 优先使用user_id作为主要标识
-                var fields = [
-                    {name: 'user_id', value: user_id},
-                    {name: 'username', value: username},
-                    {name: 'room', value: room},
-                    {name: 'first_user_id', value: first_user_id},
-                    {name: 'role', value: 'guesser'},
-                    {name: 'guess', value: userGuess}
-                ];
-                
-                // 创建并添加所有隐藏字段
-                fields.forEach(function(field) {
-                    var input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = field.name;
-                    input.value = field.value;
-                    form.appendChild(input);
-                });
-                
-                document.body.appendChild(form);
-                form.submit();
+                // 将用户猜测保存到SESSION并跳转到check_answer.php
+                // 先使用AJAX保存猜测到服务器会话
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', 'save_guess.php', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        window.location.href = 'check_answer.php';
+                    }
+                };
+                xhr.send('guess=' + encodeURIComponent(userGuess));
             }
         }
         

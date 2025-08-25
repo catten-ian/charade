@@ -13,10 +13,10 @@
     
     mysqli_set_charset($conn,"utf8");
     
-    // 获取房间名称和用户标识 - 优先使用user_id
-    $room = isset($_POST['room']) ? $_POST['room'] : '';
-    $user_id = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
-    $username = isset($_POST['username']) ? $_POST['username'] : '';
+    // 优先从SESSION中获取房间名称和用户标识
+    $room = isset($_SESSION['room']) ? $_SESSION['room'] : (isset($_POST['room']) ? $_POST['room'] : '');
+    $user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : (isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0);
+    $username = isset($_SESSION['username']) ? $_SESSION['username'] : (isset($_POST['username']) ? $_POST['username'] : '');
     
     // 检查参数是否有效
     if (empty($room) || ($user_id == 0 && empty($username))) {

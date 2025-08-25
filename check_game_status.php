@@ -2,9 +2,9 @@
 // 检查游戏状态的脚本
 session_start();
 
-// 接收POST参数
-$room = isset($_POST['room']) ? $_POST['room'] : '';
-$user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+// 优先从SESSION获取参数，其次从POST获取
+$room = isset($_SESSION['room']) ? $_SESSION['room'] : (isset($_POST['room']) ? $_POST['room'] : '');
+$user_id = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : (isset($_POST['user_id']) ? intval($_POST['user_id']) : 0);
 
 // 数据库连接
 include '../config.inc';

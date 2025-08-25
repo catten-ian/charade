@@ -64,8 +64,9 @@ function sendHeartbeat() {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/charade/heartbeat.php');
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    // 传递username、is_active和page_type参数
-    xhr.send(`username=${encodeURIComponent(username)}&is_active=${isUserActive ? 1 : 0}&page_type=${encodeURIComponent(currentPageType)}`);
+    
+    // 只需发送必要的活动状态和页面类型信息，用户身份已通过SESSION维护
+    xhr.send(`is_active=${isUserActive ? 1 : 0}&page_type=${encodeURIComponent(currentPageType)}`);
     
     // 重置非活跃标记（下次心跳前无操作则为false）
     isUserActive = false;
@@ -79,5 +80,7 @@ window.onbeforeunload = () => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/charade/heartbeat.php', false); // 同步请求
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.send(`username=${encodeURIComponent(username)}&is_online=0&page_type=${encodeURIComponent(currentPageType)}`);
+    
+    // 只需发送离线状态和页面类型信息，用户身份已通过SESSION维护
+    xhr.send(`is_online=0&page_type=${encodeURIComponent(currentPageType)}`);
 };

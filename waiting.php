@@ -173,31 +173,8 @@
                 clearInterval(timer1);
                 console.log("Time up! Redirecting to guess.php");
                 
-                // 创建表单并提交到guess.php
-                var form = document.createElement('form');
-                form.method = 'post';
-                form.action = 'guess.php';
-                
-                // 添加表单字段 - 优先使用user_id作为主要标识
-                var fields = [
-                    {name: 'user_id', value: user_id},
-                    {name: 'username', value: username},
-                    {name: 'room', value: room},
-                    {name: 'first_user_id', value: first_user_id},
-                    {name: 'role', value: 'guesser'}
-                ];
-                
-                // 创建并添加所有隐藏字段
-                fields.forEach(function(field) {
-                    var input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = field.name;
-                    input.value = field.value;
-                    form.appendChild(input);
-                });
-                
-                document.body.appendChild(form);
-                form.submit();
+                // 直接跳转到guess.php，利用SESSION中存储的信息
+                window.location.href = 'guess.php';
             }
         }
     </script>

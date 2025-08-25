@@ -97,10 +97,8 @@
     </div>
     
     <form id="wordForm" action="describe.php" method="post">
-    <input type="hidden" name="user_id" value="<?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : ''; ?>">
-    <input type="hidden" id="selectedWord" name="word">
-    <input type="hidden" id="selectedWordFinal" name="word_final">
-    <input type="hidden" name="username" value="<?php echo $username; ?>"> <!-- 保留作为辅助显示 -->
+    <!-- 只需要传递选中的单词，其他信息从SESSION中获取 -->
+    <input type="hidden" id="selectedWordFinal" name="selectedWordFinal">
 </form>
 
     <!-- <img src="./example4.png" style="left:0px;top:0px;z-index:-1;filter:brightness(50%);width:100vw;height:100vh;overflow:hidden;"> -->

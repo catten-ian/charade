@@ -139,31 +139,8 @@
                 clearInterval(timer1);
                 console.log("跳转至休息页面");
                 
-                // 创建表单并提交到rest.php
-                var form = document.createElement('form');
-                form.method = 'post';
-                form.action = 'rest.php';
-                
-                // 添加表单字段 - 优先使用user_id作为主要标识
-                var fields = [
-                    {name: 'user_id', value: user_id},
-                    {name: 'username', value: username},
-                    {name: 'room', value: room},
-                    {name: 'first_user_id', value: first_user_id},
-                    {name: 'correct_word', value: correct_word}
-                ];
-                
-                // 创建并添加所有隐藏字段
-                fields.forEach(function(field) {
-                    var input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = field.name;
-                    input.value = field.value;
-                    form.appendChild(input);
-                });
-                
-                document.body.appendChild(form);
-                form.submit();
+                // 直接跳转到rest.php，利用SESSION中存储的信息
+                window.location.href = 'rest.php';
             }
         }
     </script>

@@ -13,12 +13,20 @@ if (mysqli_connect_errno()) {
 }
 mysqli_set_charset($conn, "utf8");
 
-// 获取前端传递的参数 - 优先使用user_id作为主要标识
-$userId = isset($_POST['user_id']) ? (int)$_POST['user_id'] : null;
-$username = isset($_POST['username']) ? trim($_POST['username']) : '';
+// 优先从SESSION中获取用户信息，其次从POST请求中获取
+$userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : (isset($_POST['user_id']) ? (int)$_POST['user_id'] : null);
+$username = isset($_SESSION['username']) ? trim($_SESSION['username']) : (isset($_POST['username']) ? trim($_POST['username']) : '');
 $isActive = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 0;
 $isOnline = isset($_POST['is_online']) ? (int)$_POST['is_online'] : 1;
 $pageType = isset($_POST['page_type']) ? trim($_POST['page_type']) : '';
+
+// 如果从SESSION中获取了用户信息，也可以更新到SESSION中
+if ($userId && !isset($_SESSION['user_id'])) {
+    $_SESSION['user_id'] = $userId;
+}
+if ($username && !isset($_SESSION['username'])) {
+    $_SESSION['username'] = $username;
+}
 
 // 如果没有user_id，则尝试通过username获取
 if ($userId === null) {
