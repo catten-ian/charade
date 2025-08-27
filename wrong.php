@@ -97,6 +97,7 @@
     $user_id = $_SESSION['user_id'];
     $username=$_SESSION['username'];
     $room = $_SESSION['room'];
+    $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0;
     $first_user_id = $_SESSION['first_user_id'];
     
     // 优先从房间成员列表中获取第一个用户信息
@@ -110,6 +111,7 @@
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
+            print("var room_id = $room_id;\n");
             print("var first_user_id = $first_user_id;\n");
         ?>
         function checkUserCount() {
@@ -122,8 +124,11 @@
                 clearInterval(timer1);
                 console.log("跳转至休息页面");
                 
-                // 直接跳转到rest.php，利用SESSION中存储的信息
-                window.location.href = 'rest.php';
+                // 跳转到rest.php，同时传递room和room_id
+                const urlParams = new URLSearchParams();
+                urlParams.append('room', room);
+                urlParams.append('room_id', room_id);
+                window.location.href = 'rest.php?' + urlParams.toString();
             }
         }
     </script>

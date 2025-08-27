@@ -1,17 +1,18 @@
 <?php
 include "log.php";
 session_start();
-
+// 关闭错误报告
+error_reporting(0);
 // 定义需要记录日志的用户ID
-$log_user_ids = [8, 13];
+$log_user_ids = [8, 14];
 
 // 日志辅助函数 - 只记录特定用户ID的日志
 function shouldLog($user_id) {
     global $log_user_ids;
     return in_array($user_id, $log_user_ids);
 }
-$_SESSION['username'] = $_POST['username'];
-Logger::debug("username data:", $_POST['username']);
+// $_SESSION['username'] = $_POST['username'];
+Logger::debug("username data:", $_SESSION['username']);
 // 先不记录，等获取到用户ID后再判断是否记录
 
 include "../config.inc";
@@ -159,72 +160,15 @@ if ($room_cnt >= 1) {
             $first_user = $_SESSION['room']['members'][0];
             $first_user_id = $first_user['id'];
             // 不再更新对手状态，因为我们已删除rival相关属性
-            
-            // 只记录特定用户ID的日志
-            if (shouldLog($user_id)) {
-                Logger::info("匹配成功", ["user_id" => $user_id, "room_id" => $row[0], "room_name" => $row[1], "room_user_ids" => [$row[3], $row[4]]]);
-            }
-                echo json_encode($jret, JSON_UNESCAPED_UNICODE);
-        } else {
-            if ($row[3] == $user_id) {
-                $jret = new RetClass();
-                $jret->ret_code = 1;
-                $jret->room = $row[1];
-                $jret->username = $username;
-                $jret->user_id = $user_id;
-                $jret->in_room = true;
-                $jret->room_status = 1;
-                
-                echo json_encode($jret, JSON_UNESCAPED_UNICODE);
-            } else {
-                $jret = new RetClass();
-                $jret->ret_code = 0;
-                $jret->username = $username;
-                $jret->user_id = $user_id;
-                $jret->room = $row[1];
-                $jret->in_room = true;
-                $jret->room_status = 2;
-
-                // 从members数组获取首个用户信息
-                $first_user = $_SESSION['room']['members'][0];
-                $first_user_id = $first_user['id'];
-
-                $sql_update = "UPDATE tb_room SET user_cnt=2, user_id1=$user_id WHERE id=" . $row[0];
-                mysqli_query($conn, $sql_update);
-                // 不再更新对手状态，因为我们已删除rival相关属性
-                
-                echo json_encode($jret, JSON_UNESCAPED_UNICODE);
-            }
-        }
-    } else {
-        // 搜索空房间（不与状态为2、3、4、5、6的人匹配）
-$sql_select = "SELECT id,name,user_cnt,user_id0 FROM tb_room WHERE user_cnt<=1 and (user_id0 IS NULL OR user_id0 NOT IN (SELECT id FROM tb_user WHERE type IN (2,3,4,5,6))) order by user_cnt desc";
-// 只记录特定用户ID的日志
-if (shouldLog($user_id)) {
-    Logger::info("搜索空房间", ["user_id" => $user_id]);
-}
-$ret = mysqli_query($conn, $sql_select);
-$cnt = mysqli_num_rows($ret);
-// 只记录特定用户ID的日志
-if (shouldLog($user_id)) {
-    Logger::info("搜索空房间结果", ["user_id" => $user_id, "room_count" => $cnt]);
-}
-
-        if ($cnt <= 0) {
-            $jret = new RetClass();
-            $jret->ret_code = 2;
-            $jret->username = $username;
-            $jret->user_id = $user_id;
-            $jret->in_room = false;
-            $jret->room_status = 0;
-            
-            echo json_encode($jret, JSON_UNESCAPED_UNICODE);
-        } else {
-            $row = mysqli_fetch_row($ret);
+            // $row = mysqli_fetch_row($ret);
             // 初始化成员数组
             $members = [];
             $member_indices = [3, 4, 17, 18, 19, 20, 21, 22, 23, 24];
             foreach ($member_indices as $idx) {
+                // 只记录特定用户ID的日志
+                if (shouldLog($user_id)) {
+                    Logger::info("处理成员索引", ["user_id" => $user_id, "index" => $idx]);
+                }
                 $id = $row[$idx];
                 if ($id === null) {
                     $members[] = ['id' => null, 'name' => null, 'score' => 0];
@@ -234,7 +178,7 @@ if (shouldLog($user_id)) {
                     $ret = mysqli_query($conn, $sql);
                     $name_row = mysqli_fetch_row($ret);
                     $name = $name_row ? $name_row[0] : null;
-                    $members[] = ['id' => $id, 'name' => $name, 'score' => 0];
+                    $members[] = ['id' => $id, 'name' => $name, 'score' => 0, 'role' => 0];
                 }
             }
 
@@ -276,7 +220,170 @@ if (shouldLog($user_id)) {
                 $jret->in_room = true;
                 $jret->room_status = 1;
                 
+                Logger::debug("创建新房间", ["user_id" => $user_id, "room_name" => $_SESSION['room'], "room_id" => $_SESSION['room_id'], "room_user_names" => [$_SESSION['members'][0]['name'], $_SESSION['members'][1]['name']]]);
+            } else {
+                $jret = new RetClass();
+                $jret->ret_code = 0;
+                $jret->username = $username;
+                $jret->user_id = $user_id;
+                $jret->room = $row[1];
+                $jret->in_room = true;
+                $jret->room_status = 2;
+
+                // 从members数组获取首个用户信息
+                $first_user = $_SESSION['room']['members'][0];
+                $first_user_id = $first_user['id'];
+
+                // 判断成员位置并更新房间信息
+                // if ($_SESSION['room']['members'][0]['id'] !== $user_id && $_SESSION['room']['members'][1]['id'] !== $user_id) {
+                //     if ($_SESSION['room']['members'][0]['id'] === null) {
+                //         $sql_update = "UPDATE tb_room SET user_cnt=2, user_id0=$user_id WHERE id=" . $row[0];
+                //     } elseif ($_SESSION['room']['members'][1]['id'] === null) {
+                //         $sql_update = "UPDATE tb_room SET user_cnt=2, user_id1=$user_id WHERE id=" . $row[0];
+                //     } 
+                // }
+                // if (mysqli_query($conn, $sql_update)) {
+                //     if (shouldLog($user_id)) {
+                //         Logger::info("更新房间用户id成功", ["user_id" => $user_id, "room_id" => $row[0]]);
+                //     }
+                // } else {
+                //     if (shouldLog($user_id)) {
+                //         Logger::error("更新房间用户id失败", ["user_id" => $user_id, "error" => mysqli_error($conn)]);
+                //     }
+                // }
+                // // 更新当前用户为在房间状态
+                // if (mysqli_query($conn, "UPDATE tb_user SET in_room=1 WHERE id=$user_id")) {
+                //     if (shouldLog($user_id)) {
+                //         Logger::info("更新用户房间状态成功", ["user_id" => $user_id, "in_room" => 1]);
+                //     }
+                // } else {
+                //     if (shouldLog($user_id)) {
+                //         Logger::error("更新用户房间状态失败", ["user_id" => $user_id, "error" => mysqli_error($conn)]);
+                //     }
+                // }
+                Logger::debug("房间已满员", ["user_id" => $user_id, "room_name" => $_SESSION['room'], "room_id" => $_SESSION['room_id'], "room_user_names" => [$_SESSION['room']['members'][0]['name'], $_SESSION['room']['members'][1]['name']]]);
+            }
+            // 只记录特定用户ID的日志
+            if (shouldLog($user_id)) {
+                Logger::info("匹配成功", ["user_id" => $user_id, "room_id" => $row[0], "room_name" => $row[1], "room_user_ids" => [$row[3], $row[4]]]);
+            }
+                mysqli_query($conn, "UPDATE tb_user SET role=0 WHERE id=$user_id");
                 echo json_encode($jret, JSON_UNESCAPED_UNICODE);
+        } else {
+            if ($row[3] == $user_id) {
+                $jret = new RetClass();
+                $jret->ret_code = 1;
+                $jret->room = $row[1];
+                $jret->username = $username;
+                $jret->user_id = $user_id;
+                $jret->in_room = true;
+                $jret->room_status = 1;
+                mysqli_query($conn, "UPDATE tb_user SET role=0 WHERE id=$user_id");
+                echo json_encode($jret, JSON_UNESCAPED_UNICODE);
+            } else {
+                $jret = new RetClass();
+                $jret->ret_code = 0;
+                $jret->username = $username;
+                $jret->user_id = $user_id;
+                $jret->room = $row[1];
+                $jret->in_room = true;
+                $jret->room_status = 2;
+
+                // 从members数组获取首个用户信息
+                $first_user = $_SESSION['room']['members'][0];
+                $first_user_id = $first_user['id'];
+
+                $sql_update = "UPDATE tb_room SET user_cnt=2, user_id1=$user_id WHERE id=" . $row[0];
+                mysqli_query($conn, $sql_update);
+                mysqli_query($conn, "UPDATE tb_user SET role=0 WHERE id=$user_id");
+                echo json_encode($jret, JSON_UNESCAPED_UNICODE);
+            }
+        }
+    } else {
+        // 搜索空房间（不与状态为2、3、4、5、6的人匹配）
+$sql_select = "SELECT id,name,user_cnt,user_id0 FROM tb_room WHERE user_cnt<=1 and (user_id0 IS NULL OR user_id0 NOT IN (SELECT id FROM tb_user WHERE type IN (2,3,4,5,6))) order by user_cnt desc";
+// 只记录特定用户ID的日志
+if (shouldLog($user_id)) {
+    Logger::info("搜索空房间", ["user_id" => $user_id]);
+}
+$ret = mysqli_query($conn, $sql_select);
+$cnt = mysqli_num_rows($ret);
+// 只记录特定用户ID的日志
+if (shouldLog($user_id)) {
+    Logger::info("搜索空房间结果", ["user_id" => $user_id, "room_count" => $cnt]);
+}
+
+        if ($cnt <= 0) {
+            $jret = new RetClass();
+            $jret->ret_code = 2;
+            $jret->username = $username;
+            $jret->user_id = $user_id;
+            $jret->in_room = false;
+            $jret->room_status = 0;
+            
+            mysqli_query($conn, "UPDATE tb_user SET role=0 WHERE id=$user_id");
+            echo json_encode($jret, JSON_UNESCAPED_UNICODE);
+            Logger::debug("没有空房间", ["user_id" => $user_id]);
+        } else {
+            $row = mysqli_fetch_row($ret);
+            // 初始化成员数组
+            $members = [];
+            $member_indices = [3, 4, 17, 18, 19, 20, 21, 22, 23, 24];
+            foreach ($member_indices as $idx) {
+                $id = $row[$idx];
+                if ($id === null) {
+                    $members[] = ['id' => null, 'name' => null, 'score' => 0];
+                } else {
+                    // 查询用户名称
+                    $sql = "SELECT name FROM tb_user WHERE id = $id";
+                    $ret = mysqli_query($conn, $sql);
+                    $name_row = mysqli_fetch_row($ret);
+                    $name = $name_row ? $name_row[0] : null;
+                    $members[] = ['id' => $id, 'name' => $name, 'score' => 0, 'role' => 0];
+                }
+            }
+
+            // 重构后的房间结构，优先使用members数组存储用户信息
+            $_SESSION['room'] = [
+                'name' => $row[1],
+                'id' => $row[0],
+                'user_cnt' => $row[2],
+                'type' => $row[5],
+                'word_type' => $row[6],
+                'level_type' => $row[7],
+                'max_people' => $row[8],
+                'least_people' => $row[9],
+                'personal_try' => $row[10],
+                'team_try' => $row[11],
+                'match_random' => $row[12],
+                'vocab_custom_count' => $row[13],
+                'vocab_custom' => $row[14],
+                'winner' => $row[15],
+                'word_id' => $row[16],
+                'members' => $members
+            ];
+            // 只记录特定用户ID的日志
+            if (shouldLog($user_id)) {
+                Logger::info("找到空房间", ["user_id" => $user_id, "room_name" => $_SESSION['room'], "room_id" => $_SESSION['room_id']]);
+            }
+
+            if ($row[2] < 1) {
+                $sql_update = "UPDATE tb_room SET user_cnt = 1, user_id0=$user_id WHERE id=" . $row[0];
+                mysqli_query($conn, $sql_update);
+                // 更新当前用户为在房间状态
+                mysqli_query($conn, "UPDATE tb_user SET in_room=1 WHERE id=$user_id");
+                
+                $jret = new RetClass();
+                $jret->ret_code = 1;
+                $jret->room = $_SESSION['room'];
+                $jret->username = $username;
+                $jret->user_id = $user_id;
+                $jret->in_room = true;
+                $jret->room_status = 1;
+                
+                mysqli_query($conn, "UPDATE tb_user SET role=0 WHERE id=$user_id");
+                echo json_encode($jret, JSON_UNESCAPED_UNICODE);
+                Logger::debug("创建新房间", ["user_id" => $user_id, "room_name" => $_SESSION['room'], "room_id" => $_SESSION['room_id'], "room_user_names" => [$_SESSION['members'][0]['name'], $_SESSION['members'][1]['name']]]);
             } else {
                 $jret = new RetClass();
                 $jret->ret_code = 0;
@@ -294,8 +401,9 @@ if (shouldLog($user_id)) {
                 mysqli_query($conn, $sql_update);
                 // 更新当前用户为在房间状态
                 mysqli_query($conn, "UPDATE tb_user SET in_room=1 WHERE id=$user_id");
-                
+                mysqli_query($conn, "UPDATE tb_user SET role=0 WHERE id=$user_id");
                 echo json_encode($jret, JSON_UNESCAPED_UNICODE);
+                Logger::debug("创建新房间", ["user_id" => $user_id, "room_name" => $_SESSION['room'], "room_id" => $_SESSION['room_id'], "room_user_names" => [$_SESSION['room']['members'][0]['name'], $_SESSION['room']['members'][1]['name']]]);
             }
         }
     }

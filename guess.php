@@ -90,14 +90,17 @@
     <script>
         // 接收POST数据并设置会话变量
         <?php
-            // 接收从waiting.php传递的表单数据 - 优先使用user_id作为主要标识
+            // 接收从waiting.php传递的表单数据或URL参数 - 优先使用user_id作为主要标识
             if (isset($_POST['user_id'])) {
                 $_SESSION['user_id'] = $_POST['user_id'];
             }
             if (isset($_POST['username'])) {
                 $_SESSION['username'] = $_POST['username'];
             }
-            if (isset($_POST['room'])) {
+            // 优先从URL获取room，然后从POST获取
+            if (isset($_GET['room']) && !empty($_GET['room'])) {
+                $_SESSION['room'] = $_GET['room'];
+            } else if (isset($_POST['room'])) {
                 $_SESSION['room'] = $_POST['room'];
             }
             if (isset($_POST['first_user_id'])) {
@@ -106,10 +109,22 @@
             if (isset($_POST['role'])) {
                 $_SESSION['role'] = $_POST['role'];
             }
+            // 优先从URL获取room_id，然后从POST获取
+            if (isset($_GET['room_id']) && !empty($_GET['room_id'])) {
+                $_SESSION['room_id'] = $_GET['room_id'];
+            } else if (isset($_POST['room_id'])) {
+                $_SESSION['room_id'] = $_POST['room_id'];
+            }
             
             $user_id = $_SESSION['user_id'];
             $username = $_SESSION['username']; // 保留作为辅助显示
-            $room = $_SESSION['room'];
+            // 优先从URL获取room，然后从SESSION获取
+            if (isset($_GET['room']) && !empty($_GET['room'])) {
+                $room = $_GET['room'];
+                $_SESSION['room'] = $room;
+            } else {
+                $room = $_SESSION['room'];
+            }
             $first_user_id = $_SESSION['first_user_id'];
             // 优先从房间成员列表中获取第一个用户信息
             $first_user_name = '';
@@ -123,10 +138,13 @@
             $guess_history = isset($_SESSION['guess_history']) ? json_encode($_SESSION['guess_history']) : '[]';
             $correct_word = isset($_SESSION['correct_word']) ? $_SESSION['correct_word'] : '';
             $current_guess = isset($_SESSION['current_guess']) ? $_SESSION['current_guess'] : '';
+            // 确保room_id已设置
+            $room_id = isset($_SESSION['room_id']) ? $_SESSION['room_id'] : '';
             
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
+            print("var room_id = '$room_id';\n");
             print("var first_user_id = $first_user_id;\n");
             print("var guess_count = $guess_count;\n");
             print("var guess_history = $guess_history;\n");
@@ -249,8 +267,9 @@
             xhr.open('POST', 'update_game_status.php', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             
-            // 构建请求参数
+            // 构建请求参数，同时传递room和room_id
             var params = 'room=' + encodeURIComponent(room) +
+                         '&room_id=' + encodeURIComponent(room_id) +
                          '&user_id=' + encodeURIComponent(user_id) +
                          '&status=' + encodeURIComponent(status);
             
@@ -287,7 +306,7 @@
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === 4 && xhr.status === 200) {
-                        window.location.href = 'check_answer.php';
+                        window.location.href = 'check_answer.php?room=' + encodeURIComponent(room) + '&room_id=' + encodeURIComponent(room_id);
                     }
                 };
                 xhr.send('guess=' + encodeURIComponent(userGuess));

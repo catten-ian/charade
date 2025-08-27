@@ -13,13 +13,14 @@
     
     mysqli_set_charset($conn,"utf8");
     
-    // 优先从SESSION中获取房间名称和用户标识
+    // 优先从SESSION中获取房间名称、房间ID和用户标识
     $room = isset($_SESSION['room']) ? $_SESSION['room'] : (isset($_POST['room']) ? $_POST['room'] : '');
+    $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : (isset($_POST['room_id']) ? (int)$_POST['room_id'] : 0);
     $user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : (isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0);
     $username = isset($_SESSION['username']) ? $_SESSION['username'] : (isset($_POST['username']) ? $_POST['username'] : '');
     
     // 检查参数是否有效
-    if (empty($room) || ($user_id == 0 && empty($username))) {
+    if ((empty($room) && $room_id == 0) || ($user_id == 0 && empty($username))) {
         echo json_encode(array('allReady' => true));
         exit;
     }
@@ -42,12 +43,23 @@
     
     try {
         // 获取房间中的所有用户
-        $sql = "SELECT u.id, u.type, u.page_type 
-                FROM tb_user u 
-                JOIN tb_room r ON u.id = r.user_id0 OR u.id = r.user_id1 
-                WHERE r.name = ? AND u.id != ?";
-        $stmt = $conn->prepare($sql);
-        mysqli_stmt_bind_param($stmt, "si", $room, $user_id);
+        // 优先使用room_id进行查询
+        if ($room_id > 0) {
+            $sql = "SELECT u.id, u.type, u.page_type 
+                    FROM tb_user u 
+                    JOIN tb_room r ON u.id = r.user_id0 OR u.id = r.user_id1 
+                    WHERE r.id = ? AND u.id != ?";
+            $stmt = $conn->prepare($sql);
+            mysqli_stmt_bind_param($stmt, "ii", $room_id, $user_id);
+        } else {
+            $sql = "SELECT u.id, u.type, u.page_type 
+                    FROM tb_user u 
+                    JOIN tb_room r ON u.id = r.user_id0 OR u.id = r.user_id1 
+                    WHERE r.name = ? AND u.id != ?";
+            $stmt = $conn->prepare($sql);
+            mysqli_stmt_bind_param($stmt, "si", $room, $user_id);
+        }
+        
         mysqli_stmt_execute($stmt);
         $result = $stmt->get_result();
         

@@ -63,21 +63,49 @@
         var Count1=0;
         var window_width=window.innerWidth; 
         
+        // 从sessionStorage获取角色信息
+        var roleFromStorage = sessionStorage.getItem('role');
+        var roomIdFromStorage = sessionStorage.getItem('room_id');
+        
+        // 如果从sessionStorage获取到角色信息，通过AJAX保存到服务器端SESSION
+        if (roleFromStorage) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'save_room_id.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            
+            // 准备请求参数
+            let params = `role=${encodeURIComponent(roleFromStorage)}`;
+            if (roomIdFromStorage) {
+                params += `&room_id=${encodeURIComponent(roomIdFromStorage)}`;
+            }
+            
+            xhr.send(params);
+        }
+        
         <?php 
             // 从POST请求获取角色信息
             if (isset($_POST['role'])) {
                 $_SESSION['role'] = $_POST['role'];
             }
+            // 确保同时保存room_id
+            if (isset($_POST['room_id'])) {
+                $_SESSION['room_id'] = $_POST['room_id'];
+            }
             
             $username=$_SESSION['username'];
             $user_id = $_SESSION['user_id'];
             $room = $_SESSION['room'];
+            // 确保在SESSION中存在room_id
+            $room_id = isset($_SESSION['room_id']) ? $_SESSION['room_id'] : '';
             $role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
             
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
-            print("var role = '$role';\n");
+            // 确保在JavaScript变量中包含room_id
+            print("var room_id = '$room_id';\n");
+            // 如果从PHP没有获取到角色，使用sessionStorage中的角色
+            print("var role = '$role' || roleFromStorage || '';\n");
         ?>
         
         // 页面加载时将用户状态更新为4
@@ -107,14 +135,22 @@
                 clearInterval(timer1);                
                 console.log("time up!");
                 
-                // 根据角色跳转
+                // 根据角色跳转，同时传递room和room_id
                 if(role === 'describer')
                 {
-                    window.location.href="choose.php";
+                    // 确保同时传递room和room_id
+                    const url = new URL('choose.php', window.location.origin);
+                    url.searchParams.append('room', room);
+                    url.searchParams.append('room_id', room_id);
+                    window.location.href = url.toString();
                 }
                 else
                 {
-                    window.location.href="waiting.php";
+                    // 确保同时传递room和room_id
+                    const url = new URL('waiting.php', window.location.origin);
+                    url.searchParams.append('room', room);
+                    url.searchParams.append('room_id', room_id);
+                    window.location.href = url.toString();
                 }
             }   
         }

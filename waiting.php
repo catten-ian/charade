@@ -149,6 +149,11 @@
             $username = $_SESSION['username'];
             $user_id = $_SESSION['user_id'];
             $room = $_SESSION['room'];
+            // 确保在SESSION中存在room_id，优先从URL获取
+            if (isset($_GET['room_id']) && !empty($_GET['room_id'])) {
+                $_SESSION['room_id'] = $_GET['room_id'];
+            }
+            $room_id = isset($_SESSION['room_id']) ? $_SESSION['room_id'] : '';
             // 获取房间中的第一个用户信息
             $first_user_id = '';
             $first_user_name = '';
@@ -159,6 +164,8 @@
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
+            // 确保在JavaScript变量中包含room_id
+            print("var room_id = '$room_id';\n");
             print("var first_user_id = '$first_user_id';\n");
             print("var first_user_name = '$first_user_name';\n");
         ?>
@@ -173,8 +180,11 @@
                 clearInterval(timer1);
                 console.log("Time up! Redirecting to guess.php");
                 
-                // 直接跳转到guess.php，利用SESSION中存储的信息
-                window.location.href = 'guess.php';
+                // 跳转到guess.php页面，同时传递room和room_id
+                const url = new URL('guess.php', window.location.origin);
+                url.searchParams.append('room', room);
+                url.searchParams.append('room_id', room_id);
+                window.location.href = url.toString();
             }
         }
     </script>

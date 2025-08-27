@@ -6,6 +6,7 @@
     $user_id = $_SESSION['user_id'];
     $username = $_SESSION['username'];
     $room = $_SESSION['room'];
+    $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0;
     $role = $_SESSION['role'];
     
     // 检查是否通过POST接收到selected_word（从choose.php页面跳转时）
@@ -25,8 +26,14 @@
         mysqli_set_charset($conn, 'utf8');
         
         // 更新房间表，设置当前回合的词语
-        $stmt = mysqli_prepare($conn, "UPDATE tb_room SET current_word = ? WHERE name = ?");
-        mysqli_stmt_bind_param($stmt, 'ss', $selected_word, $room);
+        // 优先使用room_id进行更新
+        if ($room_id > 0) {
+            $stmt = mysqli_prepare($conn, "UPDATE tb_room SET current_word = ? WHERE id = ?");
+            mysqli_stmt_bind_param($stmt, 'si', $selected_word, $room_id);
+        } else {
+            $stmt = mysqli_prepare($conn, "UPDATE tb_room SET current_word = ? WHERE name = ?");
+            mysqli_stmt_bind_param($stmt, 'ss', $selected_word, $room);
+        }
         mysqli_stmt_execute($stmt);
         
         // 获取所选词汇在tb_words表中的id并更新房间的word_id
@@ -36,8 +43,14 @@
         $result = mysqli_stmt_get_result($stmt);
         if ($row = mysqli_fetch_assoc($result)) {
             $word_id = $row['id'];
-            $stmt = mysqli_prepare($conn, "UPDATE tb_room SET word_id = ? WHERE name = ?");
-            mysqli_stmt_bind_param($stmt, 'is', $word_id, $room);
+            // 优先使用room_id进行更新
+            if ($room_id > 0) {
+                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET word_id = ? WHERE id = ?");
+                mysqli_stmt_bind_param($stmt, 'ii', $word_id, $room_id);
+            } else {
+                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET word_id = ? WHERE name = ?");
+                mysqli_stmt_bind_param($stmt, 'is', $word_id, $room);
+            }
             mysqli_stmt_execute($stmt);
         }
         
@@ -145,6 +158,7 @@
         var user_id = <?php echo $user_id; ?>;
         var username = '<?php echo $username; ?>'; // 保留作为辅助显示
         var room = '<?php echo $room; ?>';
+        var room_id = <?php echo $room_id; ?>;
         var selected_word = '<?php echo $selected_word; ?>';
         
         // 定时检查
@@ -166,7 +180,7 @@
                     }
                 }
             };
-            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + encodeURIComponent(user_id) + '&username=' + encodeURIComponent(username));
+            xhr.send('room=' + encodeURIComponent(room) + '&room_id=' + encodeURIComponent(room_id) + '&user_id=' + encodeURIComponent(user_id) + '&username=' + encodeURIComponent(username));
         }
         
         // 每2秒检查一次猜测者状态

@@ -114,6 +114,8 @@
             $user_id = $_SESSION['user_id'];
             $username=$_SESSION['username'];
             $room = $_SESSION['room'];
+            // 确保room_id已设置
+            $room_id = isset($_SESSION['room_id']) ? $_SESSION['room_id'] : '';
             $first_user_id = $_SESSION['first_user_id'];
             
             // 优先从房间成员列表中获取第一个用户信息
@@ -126,6 +128,7 @@
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
+            print("var room_id = '$room_id';\n");
             print("var first_user_id = $first_user_id;\n");
             print("var first_user_name = '$first_user_name';\n");
         ?>
@@ -139,8 +142,8 @@
                 clearInterval(timer1);
                 console.log("跳转至休息页面");
                 
-                // 直接跳转到rest.php，利用SESSION中存储的信息
-                window.location.href = 'rest.php';
+                // 跳转到rest.php，传递room和room_id参数
+                window.location.href = 'rest.php?room=' + encodeURIComponent(room) + '&room_id=' + encodeURIComponent(room_id);
             }
         }
     </script>

@@ -146,11 +146,17 @@
         var window_width = window.innerWidth;
         timer1 = setInterval(checkUserCount, 1000);    
         <?php 
-            // 从SESSION中获取数据
+            // 从SESSION中获取数据，并优先从URL获取room和room_id
             $user_id = $_SESSION['user_id'];
             $username = $_SESSION['username'];
-            $room = $_SESSION['room'];
+            // 优先从URL获取room和room_id，如果没有则使用SESSION中的值
+            $room = isset($_GET['room']) ? $_GET['room'] : (isset($_SESSION['room']) ? $_SESSION['room'] : '');
+            $room_id = isset($_GET['room_id']) ? (int)$_GET['room_id'] : (isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0);
             $role = $_SESSION['role'];
+            
+            // 更新SESSION中的room和room_id
+            $_SESSION['room'] = $room;
+            $_SESSION['room_id'] = $room_id;
             
             // 优先从房间成员列表中获取第一个用户信息
             $first_user_id = '';
@@ -167,6 +173,7 @@
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
+            print("var room_id = $room_id;\n");
             print("var first_user_id = $first_user_id;\n");
             print("var role = '$role';\n");
         ?>
@@ -187,7 +194,10 @@
                 // 检查是否达到4轮
                 if (roundCount >= 4) {
                     console.log("已完成4轮游戏，跳转到结束页面");
-                    window.location.href = 'end.php';
+                    const endUrlParams = new URLSearchParams();
+                    endUrlParams.append('room', room);
+                    endUrlParams.append('room_id', room_id);
+                    window.location.href = 'end.php?' + endUrlParams.toString();
                     return;
                 }
                 
@@ -223,8 +233,11 @@
                 localStorage.setItem('roundCount', roundCount.toString());
                 localStorage.setItem('currentRole', newRole);
                 
-                // 直接跳转到目标页面，利用SESSION中存储的信息
-                window.location.href = targetPage;
+                // 跳转到目标页面，同时传递room和room_id
+                const urlParams = new URLSearchParams();
+                urlParams.append('room', room);
+                urlParams.append('room_id', room_id);
+                window.location.href = targetPage + '?' + urlParams.toString();
             }
         }
     </script>

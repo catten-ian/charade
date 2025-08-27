@@ -15,10 +15,31 @@
     // 设置字符集
     mysqli_set_charset($conn, 'utf8');
     
+    // 优先从SESSION获取数据，如果不存在则从POST或URL获取并更新SESSION
+    if (isset($_POST['user_id'])) {
+        $_SESSION['user_id'] = $_POST['user_id'];
+    }
+    if (isset($_POST['username'])) {
+        $_SESSION['username'] = $_POST['username'];
+    }
+    if (isset($_POST['room'])) {
+        $_SESSION['room'] = $_POST['room'];
+    } else if (isset($_GET['room'])) {
+        $_SESSION['room'] = $_GET['room'];
+    }
+    // 确保同时保存room_id，优先从URL获取
+    if (isset($_GET['room_id']) && !empty($_GET['room_id'])) {
+        $_SESSION['room_id'] = $_GET['room_id'];
+    } else if (isset($_POST['room_id'])) {
+        $_SESSION['room_id'] = $_POST['room_id'];
+    }
+    
     // 从SESSION中获取数据
     $user_id = $_SESSION['user_id'];
     $username = $_SESSION['username']; // 保留作为辅助显示
     $room = $_SESSION['room'];
+    // 确保room_id已设置
+    $room_id = isset($_SESSION['room_id']) ? $_SESSION['room_id'] : '';
     $role = $_SESSION['role'];
     $user_guess = $_SESSION['current_guess']; // 从之前保存的SESSION中获取猜测
     
@@ -53,8 +74,15 @@
     $_SESSION['guess_history'][] = $user_guess;
     
     // 获取本轮游戏的正确答案
-    $stmt = mysqli_prepare($conn, "SELECT current_word FROM tb_room WHERE name = ?");
-    mysqli_stmt_bind_param($stmt, 's', $room);
+    // 使用预处理语句防止SQL注入
+    // 优先使用room_id（整数）进行查询，提高效率
+    if (!empty($room_id) && is_numeric($room_id)) {
+        $stmt = mysqli_prepare($conn, "SELECT current_word FROM tb_room WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'i', $room_id);
+    } else {
+        $stmt = mysqli_prepare($conn, "SELECT current_word FROM tb_room WHERE name = ?");
+        mysqli_stmt_bind_param($stmt, 's', $room);
+    }
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     
@@ -75,8 +103,13 @@
             mysqli_stmt_execute($stmt);
             
             // 设置游戏状态为完成（猜对）
-            $stmt = mysqli_prepare($conn, "UPDATE tb_room SET game_status = 'completed', winner_id = ? WHERE name = ?");
-            mysqli_stmt_bind_param($stmt, 'is', $user_id, $room);
+            if (!empty($room_id) && is_numeric($room_id)) {
+                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET game_status = 'completed', winner_id = ? WHERE id = ?");
+                mysqli_stmt_bind_param($stmt, 'ii', $user_id, $room_id);
+            } else {
+                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET game_status = 'completed', winner_id = ? WHERE name = ?");
+                mysqli_stmt_bind_param($stmt, 'is', $user_id, $room);
+            }
             mysqli_stmt_execute($stmt);
             
             // 记录猜对的用户
@@ -92,9 +125,14 @@
                 // 3次都猜错了，游戏结束
                 
                 // 设置游戏状态为完成（猜错）
+            if (!empty($room_id) && is_numeric($room_id)) {
+                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET game_status = 'completed' WHERE id = ?");
+                mysqli_stmt_bind_param($stmt, 'i', $room_id);
+            } else {
                 $stmt = mysqli_prepare($conn, "UPDATE tb_room SET game_status = 'completed' WHERE name = ?");
                 mysqli_stmt_bind_param($stmt, 's', $room);
-                mysqli_stmt_execute($stmt);
+            }
+            mysqli_stmt_execute($stmt);
                 
                 // 重定向到错误页面
                 header('Location: wrong.php');

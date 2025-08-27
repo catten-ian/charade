@@ -33,14 +33,20 @@
         $_SESSION['rival'] = $rival; // 保留作为辅助显示
         $_SESSION['first_user_id'] = $first_user_id;
     } else {
-        // 如果不是POST请求，从会话中获取数据
+        // 如果不是POST请求，从会话中获取数据，同时优先从URL获取room和room_id
         // 优先使用user_id作为主要标识，username保留作为辅助显示
         $user_id = $_SESSION['user_id'];
         $username = $_SESSION['username'];
-        $room = $_SESSION['room'];
+        // 优先从URL获取room和room_id，如果没有则使用SESSION中的值
+        $room = isset($_GET['room']) ? $_GET['room'] : (isset($_SESSION['room']) ? $_SESSION['room'] : '');
+        $room_id = isset($_GET['room_id']) ? (int)$_GET['room_id'] : (isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0);
         $rival_id = $_SESSION['rival_id'];
         $rival = $_SESSION['rival'];
         $first_user_id = $_SESSION['first_user_id'];
+        
+        // 更新SESSION中的room和room_id
+        $_SESSION['room'] = $room;
+        $_SESSION['room_id'] = $room_id;
     }
     
     // 获取用户分数
@@ -122,6 +128,16 @@
     <title>Game End</title>
 </head>
 <body bgcolor="#1270F8" style="overflow:hidden;">
+        <script>
+            // 从PHP获取变量值
+            var user_id = <?php echo $user_id; ?>;
+            var username = '<?php echo $username; ?>';
+            var room = '<?php echo $room; ?>';
+            var room_id = <?php echo $room_id; ?>;
+            var rival_id = <?php echo $rival_id; ?>;
+            var rival = '<?php echo $rival; ?>';
+            var first_user_id = <?php echo $first_user_id; ?>;
+        </script>
 
         <!-- <img src="./example10.png" style="left:0px;top:0px;z-index:-2;filter:brightness(50%);width:100vw;height:100vh;overflow:hidden;"> -->
         <!-- 四个角落的图片 -->
@@ -144,8 +160,8 @@
         >
 
         <script>
-            // 存储用户点击状态的本地存储键名
-            const CLICK_STATUS_KEY = 'game_again_clicked_' + room;
+            // 优先使用room_id作为本地存储的键名的一部分，避免房间名重复问题
+            const CLICK_STATUS_KEY = 'game_again_clicked_' + (room_id ? room_id : room);
             
             // 标记用户是否已经点击
             let hasClicked = false;
@@ -190,6 +206,7 @@
                     {name: 'user_id', value: user_id},
                     {name: 'username', value: username},
                     {name: 'room', value: room},
+                    {name: 'room_id', value: room_id},
                     {name: 'rival_id', value: rival_id},
                     {name: 'rival', value: rival},
                     {name: 'first_user_id', value: first_user_id},

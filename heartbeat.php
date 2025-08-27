@@ -19,6 +19,9 @@ $username = isset($_SESSION['username']) ? trim($_SESSION['username']) : (isset(
 $isActive = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 0;
 $isOnline = isset($_POST['is_online']) ? (int)$_POST['is_online'] : 1;
 $pageType = isset($_POST['page_type']) ? trim($_POST['page_type']) : '';
+// 获取房间信息
+$room = isset($_SESSION['room']) ? trim($_SESSION['room']) : (isset($_POST['room']) ? trim($_POST['room']) : '');
+$roomId = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : (isset($_POST['room_id']) ? (int)$_POST['room_id'] : null);
 
 // 如果从SESSION中获取了用户信息，也可以更新到SESSION中
 if ($userId && !isset($_SESSION['user_id'])) {
@@ -79,8 +82,21 @@ mysqli_stmt_close($updateTimeStmt);
 
 // 2. 检查用户是否在房间中
 $inRoom = 0;
-$roomStmt = mysqli_prepare($conn, "SELECT id FROM tb_room WHERE user_id0 = ? OR user_id1 = ?");
-mysqli_stmt_bind_param($roomStmt, 'ii', $userId, $userId);
+
+// 如果有room_id，优先使用room_id进行精确查询
+if ($roomId) {
+    $roomStmt = mysqli_prepare($conn, "SELECT id FROM tb_room WHERE id = ? AND (user_id0 = ? OR user_id1 = ?)");
+    mysqli_stmt_bind_param($roomStmt, 'iii', $roomId, $userId, $userId);
+} elseif ($room) {
+    // 如果有room名称，使用room名称查询
+    $roomStmt = mysqli_prepare($conn, "SELECT id FROM tb_room WHERE name = ? AND (user_id0 = ? OR user_id1 = ?)");
+    mysqli_stmt_bind_param($roomStmt, 'sii', $room, $userId, $userId);
+} else {
+    // 如果两者都没有，查询用户参与的所有房间
+    $roomStmt = mysqli_prepare($conn, "SELECT id FROM tb_room WHERE user_id0 = ? OR user_id1 = ?");
+    mysqli_stmt_bind_param($roomStmt, 'ii', $userId, $userId);
+}
+
 mysqli_stmt_execute($roomStmt);
 $roomResult = mysqli_stmt_get_result($roomStmt);
 if (mysqli_num_rows($roomResult) > 0) {

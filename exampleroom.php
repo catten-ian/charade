@@ -1,8 +1,8 @@
 <?php
     // Start the session
     session_start();
-    //$_SESSION['postdata']=json_decode($_POST);
     // 优先使用user_id作为主要标识
+    // 从POST获取数据并更新SESSION
     if (isset($_POST['username'])) {
         $_SESSION['username'] = $_POST['username']; // 保留作为辅助显示
     }
@@ -55,6 +55,11 @@
     // 保存user_id到会话中，优先使用user_id作为主要标识
     $_SESSION['user_id'] = $user_id;
     
+    // 用户刚进入房间时，默认设置in_room为0
+    $_SESSION['in_room'] = 0;
+    $stmt = mysqli_prepare($conn, "UPDATE tb_user SET in_room = 0 WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, 'i', $user_id);
+    mysqli_stmt_execute($stmt);
     $sql_select="SELECT name FROM tb_user WHERE name='$username'";
     $ret=mysqli_query($conn,$sql_select);
     $row=mysqli_fetch_array($ret);
@@ -192,59 +197,32 @@
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/charade/paring.php');
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            var fmData=new FormData();
-            fmData.append('username',username);
-            xhr.send(encodeFormDataToUrlParams(fmData));
+            xhr.send();
             xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {                    
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                     
                     console.log(xhr.responseText);
                     var response=JSON.parse(xhr.responseText);
+                    // console.log(response);
                     // 当配对成功(ret_code=0)或房间已满员(room_status=2)时都应该跳转
                     if(response.ret_code==0 || response.room_status==2)
                     {
                         clearInterval(timer1);
 
-                        var form = document.createElement('form');
-                        form.method = 'post';
-                        form.action = 'exampleroom2.php';
-                        // 优先使用user_id作为主要标识
-                        var fUserId = document.createElement('input');
-                        fUserId.type = 'hidden';
-                        fUserId.name = 'user_id';
-                        fUserId.value = response.user_id;
-                        form.appendChild(fUserId);
-
-                        var fUsername = document.createElement('input');
-                        fUsername.type = 'hidden';
-                        fUsername.name = 'username';
-                        fUsername.value = response.username; // 保留作为辅助显示
-                        form.appendChild(fUsername);
-
-                        var fRoom = document.createElement('input');
-                        fRoom.type = 'hidden';
-                        fRoom.name = 'room';
-                        fRoom.value = response.room;
-                        form.appendChild(fRoom);
-
-                        // 优先从房间成员列表中获取第一个用户信息
-                        // 如果response中没有提供first_user_id，则默认为当前用户ID
-                        var fFirstUserId = document.createElement('input');
-                        fFirstUserId.type = 'hidden';
-                        fFirstUserId.name = 'first_user_id';
-                        fFirstUserId.value = response.first_user_id || response.user_id;
-                        form.appendChild(fFirstUserId);
-
-                        // 传递房间成员信息（如果有）
+                        // 将必要信息存储到SESSION
+                        sessionStorage.setItem('user_id', response.user_id);
+                        sessionStorage.setItem('username', response.username); // 保留作为辅助显示
+                        sessionStorage.setItem('room', response.room);
+                        sessionStorage.setItem('room_id', response.room_id || '');
+                        sessionStorage.setItem('first_user_id', response.first_user_id || response.user_id);
+                        
+                        // 存储房间成员信息（如果有）
                         if (response.room && response.room.members && response.room.members.length > 0) {
-                            var fMembers = document.createElement('input');
-                            fMembers.type = 'hidden';
-                            fMembers.name = 'room_members';
-                            fMembers.value = JSON.stringify(response.room.members);
-                            form.appendChild(fMembers);
+                            sessionStorage.setItem('room_members', JSON.stringify(response.room.members));
                         }
-                          
-                        document.body.appendChild(form);
-                        form.submit();
+                           
+                        // 直接跳转，不再通过表单POST
+                        window.location.href = 'exampleroom2.php';
                     }
 
                 }

@@ -13,6 +13,18 @@
     $username=$_SESSION['username'];
     mysqli_set_charset($conn,"utf8");
     
+    // 优先从URL获取room和room_id，如果存在则更新SESSION
+    if (isset($_GET['room']) && !empty($_GET['room'])) {
+        $_SESSION['room'] = $_GET['room'];
+    }
+    if (isset($_GET['room_id']) && !empty($_GET['room_id'])) {
+        $_SESSION['room_id'] = (int)$_GET['room_id'];
+    }
+    
+    // 获取room和room_id
+    $room = $_SESSION['room'];
+    $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0;
+    
     $ret=mysqli_query($conn,'SELECT COUNT(*) as count FROM tb_words');
     $row=mysqli_fetch_array($ret);
     $count = $row[0];
@@ -97,8 +109,10 @@
     </div>
     
     <form id="wordForm" action="describe.php" method="post">
-    <!-- 只需要传递选中的单词，其他信息从SESSION中获取 -->
+    <!-- 传递选中的单词以及room和room_id信息 -->
     <input type="hidden" id="selectedWordFinal" name="selectedWordFinal">
+    <input type="hidden" name="room" value="<?php echo $room; ?>">
+    <input type="hidden" name="room_id" value="<?php echo $room_id; ?>">
 </form>
 
     <!-- <img src="./example4.png" style="left:0px;top:0px;z-index:-1;filter:brightness(50%);width:100vw;height:100vh;overflow:hidden;"> -->
@@ -135,7 +149,9 @@
         var timerInterval;
         var selectedWord = "<?php echo $word1; ?>"; // 默认选择word1
         var isSelectionComplete = false;
-        var room = "<?php echo isset($_SESSION['room']) ? $_SESSION['room'] : ''; ?>";
+        var room = "<?php echo $room; ?>";
+        // 确保在JavaScript变量中包含room_id
+        var room_id = "<?php echo $room_id; ?>";
         var hasSelected = false;
         
         // 开始倒计时
@@ -225,7 +241,7 @@
                     callback(response.allReady);
                 }
             };
-            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + encodeURIComponent(user_id) + '&username=' + encodeURIComponent(username));
+            xhr.send('room=' + encodeURIComponent(room) + '&room_id=' + encodeURIComponent(room_id) + '&user_id=' + encodeURIComponent(user_id) + '&username=' + encodeURIComponent(username));
         }
         
         // 处理未响应的猜测者
@@ -233,7 +249,7 @@
             var xhr = new XMLHttpRequest();
             xhr.open('POST', 'kick_unresponsive_guessers.php', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send('room=' + encodeURIComponent(room) + '&user_id=' + encodeURIComponent(user_id) + '&username=' + encodeURIComponent(username));
+            xhr.send('room=' + encodeURIComponent(room) + '&room_id=' + encodeURIComponent(room_id) + '&user_id=' + encodeURIComponent(user_id) + '&username=' + encodeURIComponent(username));
         }
         
         // 页面加载时启动计时器
