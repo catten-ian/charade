@@ -1,4 +1,7 @@
 <?php
+    // 设置响应类型为JSON
+    header('Content-Type: application/json');
+    
     // Start the session
     session_start();
     
@@ -8,58 +11,29 @@
     // 连接数据库
     $conn = mysqli_connect('localhost', $db_user, $db_password, $db_name, $db_port);
     if (mysqli_connect_errno()) {
-        echo '数据库连接失败: ' . mysqli_connect_error();
+        echo json_encode(['status' => 'error', 'message' => '数据库连接失败: ' . mysqli_connect_error()]);
         exit();
     }
     
     // 设置字符集
     mysqli_set_charset($conn, 'utf8');
     
-    // 优先从SESSION获取数据，如果不存在则从POST或URL获取并更新SESSION
-    if (isset($_POST['user_id'])) {
-        $_SESSION['user_id'] = $_POST['user_id'];
-    }
-    if (isset($_POST['username'])) {
-        $_SESSION['username'] = $_POST['username'];
-    }
-    if (isset($_POST['room'])) {
-        $_SESSION['room'] = $_POST['room'];
-    } else if (isset($_GET['room'])) {
-        $_SESSION['room'] = $_GET['room'];
-    }
-    // 确保同时保存room_id，优先从URL获取
-    if (isset($_GET['room_id']) && !empty($_GET['room_id'])) {
-        $_SESSION['room_id'] = $_GET['room_id'];
-    } else if (isset($_POST['room_id'])) {
-        $_SESSION['room_id'] = $_POST['room_id'];
+    // 从POST参数获取猜测内容
+    if (isset($_POST['guess'])) {
+        $user_guess = $_POST['guess'];
+        // 保存到SESSION
+        $_SESSION['current_guess'] = $user_guess;
+    } else {
+        // 如果没有POST参数，尝试从SESSION获取
+        $user_guess = isset($_SESSION['current_guess']) ? $_SESSION['current_guess'] : '';
     }
     
-    // 从SESSION中获取数据
+    // 从SESSION获取数据
     $user_id = $_SESSION['user_id'];
-    $username = $_SESSION['username']; // 保留作为辅助显示
-    $room = $_SESSION['room'];
-    // 确保room_id已设置
+    $username = $_SESSION['username'];
+    $room = $_SESSION['room']['name'];
     $room_id = isset($_SESSION['room_id']) ? $_SESSION['room_id'] : '';
     $role = $_SESSION['role'];
-    $user_guess = $_SESSION['current_guess']; // 从之前保存的SESSION中获取猜测
-    
-    // 优先从房间成员列表中获取第一个用户信息
-    $first_user_id = '';
-    $first_user_name = '';
-    if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
-        $first_user_id = $_SESSION['room']['members'][0]['id'];
-        $first_user_name = $_SESSION['room']['members'][0]['name'];
-    }
-    
-    // 保存first_user_id到SESSION
-    $_SESSION['first_user_id'] = $first_user_id;
-    
-    // 优先从房间成员列表中获取第一个用户信息
-    $first_user_name = '';
-    if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
-        $first_user_id = $_SESSION['room']['members'][0]['id'];
-        $first_user_name = $_SESSION['room']['members'][0]['name'];
-    }
     
     // 初始化猜测次数和历史记录
     if (!isset($_SESSION['guess_count'])) {
@@ -73,28 +47,35 @@
     // 记录当前猜测
     $_SESSION['guess_history'][] = $user_guess;
     
+    // 结果数组
+    $response = ['status' => 'error', 'message' => '未知错误'];
+    
     // 获取本轮游戏的正确答案
-    // 使用预处理语句防止SQL注入
-    // 优先使用room_id（整数）进行查询，提高效率
     if (!empty($room_id) && is_numeric($room_id)) {
-        $stmt = mysqli_prepare($conn, "SELECT current_word FROM tb_room WHERE id = ?");
+        $stmt = mysqli_prepare($conn, "SELECT word_id FROM tb_room WHERE id = ?");
         mysqli_stmt_bind_param($stmt, 'i', $room_id);
     } else {
-        $stmt = mysqli_prepare($conn, "SELECT current_word FROM tb_room WHERE name = ?");
+        $stmt = mysqli_prepare($conn, "SELECT word_id FROM tb_room WHERE name = ?");
         mysqli_stmt_bind_param($stmt, 's', $room);
     }
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     
     if ($row = mysqli_fetch_assoc($result)) {
-        $correct_word = $row['current_word'];
-        
-        // 保存正确答案到会话中，以便在结果页面显示
-        $_SESSION['correct_word'] = $correct_word;
-        $_SESSION['current_guess'] = $user_guess;
+        $selected_word = $row['word_id'];
+        // 从单词表中获取正确单词
+        $stmt = mysqli_prepare($conn, "SELECT word FROM tb_words WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'i', $selected_word);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        if ($row = mysqli_fetch_assoc($result)) {
+            $selected_word = $row['word'];
+        }
+        // 保存正确答案到会话中
+        $_SESSION['selected_word'] = $selected_word;
         
         // 比较用户猜测和正确答案（不区分大小写）
-        if (strcasecmp($user_guess, $correct_word) === 0) {
+        if (strcasecmp($user_guess, $selected_word) === 0) {
             // 猜测正确
             
             // 更新用户分数
@@ -104,19 +85,20 @@
             
             // 设置游戏状态为完成（猜对）
             if (!empty($room_id) && is_numeric($room_id)) {
-                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET game_status = 'completed', winner_id = ? WHERE id = ?");
+                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET status = 3, winner = ? WHERE id = ?");
                 mysqli_stmt_bind_param($stmt, 'ii', $user_id, $room_id);
             } else {
-                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET game_status = 'completed', winner_id = ? WHERE name = ?");
+                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET status = 3, winner = ? WHERE name = ?");
                 mysqli_stmt_bind_param($stmt, 'is', $user_id, $room);
             }
             mysqli_stmt_execute($stmt);
             
             // 记录猜对的用户
-            $_SESSION['guessed_username'] = $username;
+            $_SESSION['room']['winner'] = $user_id;
+            $_SESSION['room']['winner_name'] = $username;
             
-            // 重定向到正确页面
-            header('Location: right.php');
+            // 返回正确结果
+            $response = ['status' => 'correct', 'word' => $selected_word];
         } else {
             // 猜测错误
             
@@ -125,29 +107,32 @@
                 // 3次都猜错了，游戏结束
                 
                 // 设置游戏状态为完成（猜错）
-            if (!empty($room_id) && is_numeric($room_id)) {
-                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET game_status = 'completed' WHERE id = ?");
-                mysqli_stmt_bind_param($stmt, 'i', $room_id);
-            } else {
-                $stmt = mysqli_prepare($conn, "UPDATE tb_room SET game_status = 'completed' WHERE name = ?");
-                mysqli_stmt_bind_param($stmt, 's', $room);
-            }
-            mysqli_stmt_execute($stmt);
+                if (!empty($room_id) && is_numeric($room_id)) {
+                    $stmt = mysqli_prepare($conn, "UPDATE tb_room SET status = 3 WHERE id = ?");
+                    mysqli_stmt_bind_param($stmt, 'i', $room_id);
+                } else {
+                    $stmt = mysqli_prepare($conn, "UPDATE tb_room SET status = 3 WHERE name = ?");
+                    mysqli_stmt_bind_param($stmt, 's', $room);
+                }
+                mysqli_stmt_execute($stmt);
                 
-                // 重定向到错误页面
-                header('Location: wrong.php');
+                // 返回错误结果并标记游戏结束
+                $response = ['status' => 'wrong', 'game_over' => true, 'remaining_guesses' => 0, 'word' => $selected_word];
             } else {
-                // 还有猜测机会，返回guess.php继续猜测
-                
-                // 将当前猜测结果保存到会话，供guess.php显示
-                header('Location: guess.php');
+                // 还有猜测机会，返回继续猜测
+                $remaining_guesses = 3 - $_SESSION['guess_count'];
+                $response = ['status' => 'wrong', 'game_over' => false, 'remaining_guesses' => $remaining_guesses];
             }
         }
     } else {
         // 没有找到对应的房间或正确答案
-        echo '游戏数据错误，请重新开始';
+        $response = ['status' => 'error', 'message' => '游戏数据错误，请重新开始'];
     }
     
     // 关闭数据库连接
     mysqli_close($conn);
+    
+    // 返回JSON响应
+    echo json_encode($response);
+    exit;
 ?>

@@ -44,7 +44,7 @@
     <!-- 装饰图片 -->
     <img src="./room2.png" style="position:absolute; left:8.3vw; top:0.7vw; width:8vw; z-index:1;">
     <img src="./room4.png" style="position:absolute; left:86.8vw; bottom:72vh; width:11vw; z-index:1;">
-    <img src="./picture5.png" style="position:absolute; right:27.2vw; bottom:80vh; width:6vw; z-index:0; opacity:1;">
+    <img src="./star.png" style="position:absolute; right:27.2vw; bottom:80vh; width:6vw; z-index:0; opacity:1;">
     <img src="./astronaut.svg" style="position:absolute; left:-28.9vw; bottom:-29vh; height:115vh; z-index:0; opacity:1;">
     
     <!-- 进度条与图片容器（合并重复元素，避免冗余） -->
@@ -146,17 +146,12 @@
         var window_width = window.innerWidth;
         timer1 = setInterval(checkUserCount, 1000);    
         <?php 
-            // 从SESSION中获取数据，并优先从URL获取room和room_id
+            // 从SESSION中获取数据
             $user_id = $_SESSION['user_id'];
             $username = $_SESSION['username'];
-            // 优先从URL获取room和room_id，如果没有则使用SESSION中的值
-            $room = isset($_GET['room']) ? $_GET['room'] : (isset($_SESSION['room']) ? $_SESSION['room'] : '');
-            $room_id = isset($_GET['room_id']) ? (int)$_GET['room_id'] : (isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0);
+            $room = isset($_SESSION['room']) ? $_SESSION['room'] : '';
+            $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0;
             $role = $_SESSION['role'];
-            
-            // 更新SESSION中的room和room_id
-            $_SESSION['room'] = $room;
-            $_SESSION['room_id'] = $room_id;
             
             // 优先从房间成员列表中获取第一个用户信息
             $first_user_id = '';
@@ -233,11 +228,8 @@
                 localStorage.setItem('roundCount', roundCount.toString());
                 localStorage.setItem('currentRole', newRole);
                 
-                // 跳转到目标页面，同时传递room和room_id
-                const urlParams = new URLSearchParams();
-                urlParams.append('room', room);
-                urlParams.append('room_id', room_id);
-                window.location.href = targetPage + '?' + urlParams.toString();
+                // 直接跳转到目标页面，依赖SESSION传递数据
+                window.location.href = targetPage;
             }
         }
     </script>

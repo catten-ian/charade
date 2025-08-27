@@ -1,4 +1,20 @@
 <?php
+    // 引入日志文件
+    require_once 'log.php';
+    
+    // 关闭错误报告（生产环境）
+    error_reporting(E_ALL);
+    ini_set('display_errors', 0);
+    
+    // 定义需要记录日志的用户ID
+    $log_user_ids = [8, 14];
+    
+    // 检查是否应该记录日志的函数
+    function shouldLog($user_id) {
+        global $log_user_ids;
+        return in_array($user_id, $log_user_ids);
+    }
+    
     // Start the session
     session_start();
 ?>
@@ -67,8 +83,10 @@
         var roleFromStorage = sessionStorage.getItem('role');
         var roomIdFromStorage = sessionStorage.getItem('room_id');
         
+        console.log('[LOG] 从sessionStorage读取的角色信息:', { roleFromStorage: roleFromStorage, roomIdFromStorage: roomIdFromStorage });
         // 如果从sessionStorage获取到角色信息，通过AJAX保存到服务器端SESSION
         if (roleFromStorage) {
+            console.log('[LOG] 准备将sessionStorage中的角色信息保存到服务器');
             const xhr = new XMLHttpRequest();
             xhr.open('POST', 'save_room_id.php', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -79,25 +97,38 @@
                 params += `&room_id=${encodeURIComponent(roomIdFromStorage)}`;
             }
             
+            console.log('[LOG] 发送保存角色信息的AJAX请求:', params);
             xhr.send(params);
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        console.log('[LOG] 角色信息保存成功:', xhr.responseText);
+                    } else {
+                        console.log('[LOG] 角色信息保存失败，状态码:', xhr.status);
+                    }
+                }
+            };
         }
         
         <?php 
-            // 从POST请求获取角色信息
-            if (isset($_POST['role'])) {
-                $_SESSION['role'] = $_POST['role'];
-            }
-            // 确保同时保存room_id
-            if (isset($_POST['room_id'])) {
-                $_SESSION['room_id'] = $_POST['room_id'];
-            }
             
             $username=$_SESSION['username'];
             $user_id = $_SESSION['user_id'];
-            $room = $_SESSION['room'];
+            $room = $_SESSION['room']['name'];
             // 确保在SESSION中存在room_id
-            $room_id = isset($_SESSION['room_id']) ? $_SESSION['room_id'] : '';
+            $room_id = isset($_SESSION['room']['id']) ? $_SESSION['room']['id'] : '';
             $role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
+            
+            // 记录日志 - 只记录特定用户ID
+            if (shouldLog($user_id)) {
+                Logger::info("用户进入start页面", ["user_id" => $user_id, "username" => $username, "room" => $room, "room_id" => $room_id, "role" => $role]);
+            }
+            
+            // 记录POST数据（如果有）- 只记录特定用户ID
+            if (shouldLog($user_id) && !empty($_POST)) {
+                Logger::info("接收到POST数据", ["user_id" => $user_id, "post_data" => json_encode($_POST)]);
+            }
             
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
@@ -110,56 +141,71 @@
         
         // 页面加载时将用户状态更新为4
         function updateUserStatusTo4() {
+            console.log('[LOG] 页面加载，准备更新用户状态为4');
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/charade/heartbeat.php', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send(`user_id=${encodeURIComponent(user_id)}&username=${encodeURIComponent(username)}&is_online=1&is_active=1&page_type=start`);
+            const params = `user_id=${encodeURIComponent(user_id)}&username=${encodeURIComponent(username)}&is_online=1&is_active=1&page_type=start`;
+            console.log('[LOG] 发送用户状态更新请求:', params);
+            xhr.send(params);
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        console.log('[LOG] 用户状态更新成功:', xhr.responseText);
+                    } else {
+                        console.log('[LOG] 用户状态更新失败，状态码:', xhr.status);
+                    }
+                }
+            };
         }
         
         // 页面关闭时将用户状态更新为5
-        window.addEventListener('beforeunload', function() {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/charade/heartbeat.php', false); // 同步请求
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send(`user_id=${encodeURIComponent(user_id)}&username=${encodeURIComponent(username)}&is_online=0&page_type=start`);
-        });
+        // window.addEventListener('beforeunload', function() {
+        //     console.log('[LOG] 页面即将关闭，准备更新用户状态为5');
+        //     const xhr = new XMLHttpRequest();
+        //     xhr.open('POST', '/charade/heartbeat.php', false); // 同步请求
+        //     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        //     const params = `user_id=${encodeURIComponent(user_id)}&username=${encodeURIComponent(username)}&is_online=0&page_type=start`;
+        //     console.log('[LOG] 发送页面关闭时的用户状态更新请求:', params);
+        //     xhr.send(params);
+        // });
         
         function checkUserCount()
         {
             timeCur=timeObj.getTime();  
             Count1=Count1+1;            
+            console.log('[LOG] 计时器检查，当前计数:', Count1);
+            
             if(Count1>=5)
             {
                 /* stop timer */
                 Count1=-1000;
                 clearInterval(timer1);                
-                console.log("time up!");
-                
-                // 根据角色跳转，同时传递room和room_id
+                console.log('[LOG] 时间到！停止计时器');
+                // 根据角色跳转，数据已通过SESSION传递
+                console.log('[LOG] 当前用户角色:', role, '，准备跳转到对应页面');
                 if(role === 'describer')
                 {
-                    // 确保同时传递room和room_id
-                    const url = new URL('choose.php', window.location.origin);
-                    url.searchParams.append('room', room);
-                    url.searchParams.append('room_id', room_id);
-                    window.location.href = url.toString();
+                    console.log('[LOG] 描述者跳转到choose页面');
+                    window.location.href = 'choose.php';
                 }
                 else
                 {
-                    // 确保同时传递room和room_id
-                    const url = new URL('waiting.php', window.location.origin);
-                    url.searchParams.append('room', room);
-                    url.searchParams.append('room_id', room_id);
-                    window.location.href = url.toString();
+                    console.log('[LOG] 猜测者跳转到waiting页面');
+                    window.location.href = 'waiting.php';
                 }
             }   
         }
         
         // 启动计时器
+        console.log('[LOG] 启动页面计时器，间隔1秒');
         timer1=setInterval(checkUserCount,1000);
         
         // 页面加载时更新用户状态为4
         window.onload = updateUserStatusTo4;
+        
+        console.log('[LOG] start页面初始化完成，用户信息:', { user_id: user_id, username: username, room: room, room_id: room_id, role: role });
     </script>
     <script src="./activity-detector.js"></script>
 </body>

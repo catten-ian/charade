@@ -1,4 +1,20 @@
 <?php
+    // 引入日志文件
+    include "log.php";
+    
+    // 关闭错误报告（生产环境）
+    error_reporting(E_ALL);
+    ini_set('display_errors', 0);
+    
+    // 定义需要记录日志的用户ID
+    $log_user_ids = [8, 14];
+    
+    // 检查是否应该记录日志的函数
+    function shouldLog($user_id) {
+        global $log_user_ids;
+        return in_array($user_id, $log_user_ids);
+    }
+
     // Start the session
     session_start();
 
@@ -11,19 +27,22 @@
     }
 
     $username=$_SESSION['username'];
+    $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : '';
     mysqli_set_charset($conn,"utf8");
     
-    // 优先从URL获取room和room_id，如果存在则更新SESSION
-    if (isset($_GET['room']) && !empty($_GET['room'])) {
-        $_SESSION['room'] = $_GET['room'];
-    }
-    if (isset($_GET['room_id']) && !empty($_GET['room_id'])) {
-        $_SESSION['room_id'] = (int)$_GET['room_id'];
+    // 从SESSION中获取room和room_id
+    $room = $_SESSION['room']['name'];
+    $room_id = isset($_SESSION['room']['id']) ? (int)$_SESSION['room']['id'] : 0;
+    
+    // 记录日志 - 只记录特定用户ID
+    if (shouldLog($user_id)) {
+        Logger::info("用户进入choose页面", ["user_id" => $user_id, "username" => $username, "room" => $room, "room_id" => $room_id]);
     }
     
-    // 获取room和room_id
-    $room = $_SESSION['room'];
-    $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0;
+    // 记录POST数据（如果有）- 只记录特定用户ID
+    if (shouldLog($user_id) && !empty($_POST)) {
+        Logger::info("接收到POST数据", ["user_id" => $user_id, "post_data" => json_encode($_POST)]);
+    }
     
     $ret=mysqli_query($conn,'SELECT COUNT(*) as count FROM tb_words');
     $row=mysqli_fetch_array($ret);
@@ -67,6 +86,11 @@
     $word4 = $row[0];
 
     mysqli_close($conn);
+    
+    // 记录选择的单词 - 只记录特定用户ID
+    if (shouldLog($user_id)) {
+        Logger::info("随机选择的单词", ["user_id" => $user_id, "words" => [$word1, $word2, $word3, $word4]]);
+    }
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -108,11 +132,8 @@
         <span id="timer">10</span>秒
     </div>
     
-    <form id="wordForm" action="describe.php" method="post">
-    <!-- 传递选中的单词以及room和room_id信息 -->
-    <input type="hidden" id="selectedWordFinal" name="selectedWordFinal">
-    <input type="hidden" name="room" value="<?php echo $room; ?>">
-    <input type="hidden" name="room_id" value="<?php echo $room_id; ?>">
+    <form id="wordForm" action="describe.php" method="get">
+    <!-- 通过SESSION传递数据，不再使用POST隐藏字段 -->
 </form>
 
     <!-- <img src="./example4.png" style="left:0px;top:0px;z-index:-1;filter:brightness(50%);width:100vw;height:100vh;overflow:hidden;"> -->
@@ -152,7 +173,13 @@
         var room = "<?php echo $room; ?>";
         // 确保在JavaScript变量中包含room_id
         var room_id = "<?php echo $room_id; ?>";
-        var hasSelected = false;
+        // 检查是否应该记录日志的标志
+        var shouldLog = <?php echo shouldLog($user_id) ? 'true' : 'false'; ?>;
+        
+        // 页面加载日志
+        if (shouldLog) {
+            console.log('[LOG] choose页面加载完成，用户信息:', { user_id: user_id, username: username, room: room, room_id: room_id });
+        }
         
         // 开始倒计时
         function startTimer() {
@@ -173,24 +200,40 @@
             
             // 设置选中的单词
             selectedWord = word;
-            document.getElementById('selectedWord').value = word;
-            document.getElementById('selectedWordFinal').value = word;
-            
-            // 如果是首次选择，则将其他单词的可见度降低
-            if (!hasSelected) {
-                hasSelected = true;
-                for (var i = 1; i <= 4; i++) {
-                    if (i !== index) {
-                        document.getElementById('wordDiv' + i).style.opacity = '0.35';
-                    }
+            for (var i = 1; i <= 4; i++) {
+                if (i !== index) {
+                    document.getElementById('wordDiv' + i).style.opacity = '0.35';
                 }
             }
-            
+            document.getElementById('wordDiv' + index).style.opacity = '1';
             // 高亮显示当前选中的单词
             for (var i = 1; i <= 4; i++) {
                 document.getElementById('wordDiv' + i).classList.remove('selected-word');
             }
             document.getElementById('wordDiv' + index).classList.add('selected-word');
+            
+            // 记录选择的单词 - 客户端控制台日志
+            if (shouldLog) {
+                console.log('[LOG] 用户选择单词:', { user_id: user_id, word: word, index: index });
+            }
+            
+            // 通过AJAX将选中的单词保存到SESSION
+            saveSelectedWordToSession(word);
+        }
+        
+        // 保存选中的单词到SESSION
+        function saveSelectedWordToSession(word) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'save_word_to_session.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    if (shouldLog) {
+                        console.log('[LOG] 单词已保存到SESSION: ' + word);
+                    }
+                }
+            };
+            xhr.send('selected_word=' + encodeURIComponent(word));
         }
         
         // 完成选择并检查猜测者状态
@@ -201,6 +244,11 @@
             for (var i = 1; i <= 4; i++) {
                 document.getElementById('wordDiv' + i).style.pointerEvents = 'none';
                 document.getElementById('wordDiv' + i).style.cursor = 'default';
+            }
+            
+            // 记录选择完成日志 - 客户端控制台日志
+            if (shouldLog) {
+                console.log('[LOG] 单词选择完成，等待猜测者', { user_id: user_id, selected_word: selectedWord });
             }
             
             // 等待猜测者跳转
@@ -223,8 +271,8 @@
                             handleUnresponsiveGuessers();
                         }
                         
-                        // 提交表单
-                        document.getElementById('wordForm').submit();
+                        // 直接跳转页面，而不是提交表单，避免URL末尾出现问号
+                        window.location.href = 'describe.php';
                     }
                 });
             }, 1000);
@@ -234,22 +282,20 @@
         function checkGuesserStatus(callback) {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', 'check_guesser_status.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     var response = JSON.parse(xhr.responseText);
                     callback(response.allReady);
                 }
             };
-            xhr.send('room=' + encodeURIComponent(room) + '&room_id=' + encodeURIComponent(room_id) + '&user_id=' + encodeURIComponent(user_id) + '&username=' + encodeURIComponent(username));
+            xhr.send();
         }
         
         // 处理未响应的猜测者
         function handleUnresponsiveGuessers() {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', 'kick_unresponsive_guessers.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send('room=' + encodeURIComponent(room) + '&room_id=' + encodeURIComponent(room_id) + '&user_id=' + encodeURIComponent(user_id) + '&username=' + encodeURIComponent(username));
+            xhr.send();
         }
         
         // 页面加载时启动计时器

@@ -3,7 +3,7 @@
 session_start();
 
 // 优先从SESSION获取参数，其次从POST获取
-$room = isset($_SESSION['room']) ? $_SESSION['room'] : (isset($_POST['room']) ? $_POST['room'] : '');
+$room_id = isset($_SESSION['room']['id']) ? $_SESSION['room']['id'] : (isset($_POST['room_id']) ? $_POST['room_id'] : '');
 $user_id = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : (isset($_POST['user_id']) ? intval($_POST['user_id']) : 0);
 
 // 数据库连接
@@ -22,18 +22,18 @@ $response = array(
 );
 
 // 查询房间状态
-if (!empty($room)) {
-    $stmt = mysqli_prepare($conn, "SELECT game_status, winner_id FROM tb_room WHERE name = ?");
-    mysqli_stmt_bind_param($stmt, 's', $room);
+if (!empty($room_id)) {
+    $stmt = mysqli_prepare($conn, "SELECT status, winner FROM tb_room WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, 's', $room_id);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     
     if ($row = mysqli_fetch_assoc($result)) {
-        // 检查游戏是否结束（状态为2表示结束）
-        if ($row['game_status'] == 2) {
+        // 检查游戏是否结束（状态为3表示结束）
+        if ($row['status'] == 3) {
             $response['game_over'] = true;
-            // 检查是否有用户猜对（winner_id不为0）
-            if ($row['winner_id'] != 0) {
+            // 检查是否有用户猜对（winner不为0）
+            if ($row['winner'] != 0) {
                 $response['correct_guess'] = true;
             }
         }

@@ -44,7 +44,7 @@
     <!-- 装饰图片 -->
     <img src="./room2.png" style="position:absolute; left:8.3vw; top:0.7vw; width:8vw; z-index:1;">
     <img src="./room4.png" style="position:absolute; left:86.8vw; bottom:72vh; width:11vw; z-index:1;">
-    <img src="./picture5.png" style="position:absolute; right:27.2vw; bottom:80vh; width:6vw; z-index:0; opacity:1;">
+    <img src="./star.png" style="position:absolute; right:27.2vw; bottom:80vh; width:6vw; z-index:0; opacity:1;">
     <img src="./astronaut.svg" style="position:absolute; left:-28.9vw; bottom:-29vh; height:115vh; z-index:0; opacity:1;">
     
     <!-- 进度条与图片容器（合并重复元素，避免冗余） -->
@@ -148,26 +148,14 @@
         <?php 
             $username = $_SESSION['username'];
             $user_id = $_SESSION['user_id'];
-            $room = $_SESSION['room'];
-            // 确保在SESSION中存在room_id，优先从URL获取
-            if (isset($_GET['room_id']) && !empty($_GET['room_id'])) {
-                $_SESSION['room_id'] = $_GET['room_id'];
-            }
-            $room_id = isset($_SESSION['room_id']) ? $_SESSION['room_id'] : '';
-            // 获取房间中的第一个用户信息
-            $first_user_id = '';
-            $first_user_name = '';
-            if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
-                $first_user_id = $_SESSION['room']['members'][0]['id'];
-                $first_user_name = $_SESSION['room']['members'][0]['name'];
-            }
+            $room = $_SESSION['room']['name'];
+            // 从SESSION中获取room_id
+            $room_id = isset($_SESSION['room']['id']) ? $_SESSION['room']['id'] : '';
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
             // 确保在JavaScript变量中包含room_id
             print("var room_id = '$room_id';\n");
-            print("var first_user_id = '$first_user_id';\n");
-            print("var first_user_name = '$first_user_name';\n");
         ?>
         function checkUserCount() {
             console.log("Checking user count");
@@ -180,11 +168,8 @@
                 clearInterval(timer1);
                 console.log("Time up! Redirecting to guess.php");
                 
-                // 跳转到guess.php页面，同时传递room和room_id
-                const url = new URL('guess.php', window.location.origin);
-                url.searchParams.append('room', room);
-                url.searchParams.append('room_id', room_id);
-                window.location.href = url.toString();
+                // 跳转到guess.php页面，数据已通过SESSION传递
+                window.location.href = 'guess.php';
             }
         }
     </script>

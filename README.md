@@ -11,5 +11,13 @@ room type:1 public, 2 private, 3 group
 word type:1 animal, 2 object, 3 place, 4 thing, 5 person, 6 event, 7 idea, 8 feeling, 9 number, 10 time, 11 measurement, 12 feeling, 13 verb, 14 adjective, 15 random
 difficulty level:1 easy, 2 medium, 3 hard
 
+room status:0 default, 1 waiting, 2 playing, 3 finished, 4 closed
+room status 值	含义
+0	缺省状态
+1	等待中
+2	游戏中
+3	已结束
+4	已关闭
+
 # 每分钟执行一次状态更新
 * * * * * /usr/bin/php /path/to/charade/cron/update_user_status.php

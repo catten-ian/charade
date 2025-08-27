@@ -199,7 +199,8 @@ if ($room_cnt >= 1) {
                 'vocab_custom' => $row[14],
                 'winner' => $row[15],
                 'word_id' => $row[16],
-                'members' => $members
+                'members' => $members,
+                'status' => $row[25]
             ];
             // 只记录特定用户ID的日志
             if (shouldLog($user_id)) {
@@ -360,7 +361,8 @@ if (shouldLog($user_id)) {
                 'vocab_custom' => $row[14],
                 'winner' => $row[15],
                 'word_id' => $row[16],
-                'members' => $members
+                'members' => $members,
+                'status' => $row[25]
             ];
             // 只记录特定用户ID的日志
             if (shouldLog($user_id)) {

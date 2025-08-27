@@ -35,7 +35,7 @@
         case 'correct_guess':
             // 用户猜对了，更新房间状态和获胜者
             // 优先使用room_id来更新房间状态
-            $sql = "UPDATE tb_room SET game_status = 'completed', winner_id = ? WHERE id = ?";
+            $sql = "UPDATE tb_room SET status = 3, winner = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("ii", $user_id, $room_id);  // user_id和room_id都是整数类型
             $stmt->execute();
@@ -71,7 +71,7 @@
             // 假设房间中有2名玩家，1名描述者，1名猜测者
             if ($row['wrong_count'] == 1) {
                 // 所有猜测者都猜错了，更新房间状态
-                $sql = "UPDATE tb_room SET game_status = 'completed', winner_id = NULL WHERE id = ?";
+                $sql = "UPDATE tb_room SET status = 3, winner = NULL WHERE id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("i", $room_id);
                 $stmt->execute();

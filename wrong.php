@@ -66,7 +66,7 @@
             -webkit-text-stroke: 2vw #f5e33f; /* 黄色描边 */
             z-index:1;
         ">
-            圣诞鹿
+            <?php echo isset($_SESSION['selected_word']) ? htmlspecialchars($_SESSION['selected_word']) : '未知词语'; ?>
         </div>
         <div id="word2" style="
             position:absolute;
@@ -81,7 +81,7 @@
             color: black;
             z-index:4;
         ">
-            圣诞鹿
+            <?php echo isset($_SESSION['selected_word']) ? htmlspecialchars($_SESSION['selected_word']) : '未知词语'; ?>
         </div>
         
 
@@ -98,21 +98,13 @@
     $username=$_SESSION['username'];
     $room = $_SESSION['room'];
     $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0;
-    $first_user_id = $_SESSION['first_user_id'];
     
-    // 优先从房间成员列表中获取第一个用户信息
-    $first_user_name = '';
-    if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
-        $first_user_id = $_SESSION['room']['members'][0]['id'];
-        $first_user_name = $_SESSION['room']['members'][0]['name'];
-    }
     
     // 优先声明user_id，username保留作为辅助显示
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
             print("var room_id = $room_id;\n");
-            print("var first_user_id = $first_user_id;\n");
         ?>
         function checkUserCount() {
             console.log("Checking user count");
@@ -124,11 +116,8 @@
                 clearInterval(timer1);
                 console.log("跳转至休息页面");
                 
-                // 跳转到rest.php，同时传递room和room_id
-                const urlParams = new URLSearchParams();
-                urlParams.append('room', room);
-                urlParams.append('room_id', room_id);
-                window.location.href = 'rest.php?' + urlParams.toString();
+                // 直接跳转到rest.php，依赖SESSION传递数据
+                window.location.href = 'rest.php';
             }
         }
     </script>
