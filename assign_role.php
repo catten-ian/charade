@@ -94,6 +94,27 @@ try {
         throw new Exception('用户不在指定房间内');
     }
     
+    // 分配角色逻辑
+    $assigned_role = 0;
+    // 将用户的role在数据库中设置为0
+    $update_sql = "UPDATE tb_user SET role = 0 WHERE id = ?";
+
+    // 记录日志 - 只记录特定用户ID
+    if (shouldLog($user_id)) {
+        Logger::info("准备重置用户角色为0", ["user_id" => $user_id, "room_id" => $room_id, "sql" => $update_sql]);
+    }
+
+    $update_stmt = $conn->prepare($update_sql);
+    $update_stmt->bind_param('i', $user_id);
+
+    if (!$update_stmt->execute()) {
+        throw new Exception('重置角色为0失败: ' . $update_stmt->error);
+    }
+
+    // 记录日志 - 只记录特定用户ID
+    if (shouldLog($user_id)) {
+        Logger::info("用户角色重置为0成功", ["user_id" => $user_id, "room_id" => $room_id]);
+    }
     // 检查房间内已有的角色分配情况
     $role_sql = "SELECT u.role FROM tb_user u JOIN tb_room r ON FIND_IN_SET(u.id, CONCAT_WS(',', r.user_id0, r.user_id1, r.user_id2, r.user_id3, r.user_id4, r.user_id5, r.user_id6, r.user_id7, r.user_id8, r.user_id9)) WHERE r.id = ? AND u.role IN (1, 2)";
     
@@ -112,8 +133,6 @@ try {
         $roles_in_room[] = $role_row['role'];
     }
     
-    // 分配角色逻辑
-    $assigned_role = 0;
     
     // 计算房间内各种角色的数量
     $describer_count = count(array_keys($roles_in_room, 1));

@@ -2,7 +2,63 @@
     // Start the session
     session_start();
 
+    // 包含数据库配置
+    $config = parse_ini_file('db_config.ini', true);
+    $db_host = $config['database']['host'];
+    $db_user = $config['database']['username'];
+    $db_pass = $config['database']['password'];
+    $db_name = $config['database']['dbname'];
+    
+    // 连接数据库
+    $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+    
+    // 检查连接
+    if (!$conn) {
+        die('数据库连接失败: ' . mysqli_connect_error());
+    }
 
+    // 获取获胜者名称逻辑
+    if (!isset($_SESSION['room']['winner_name'])) {
+        // 获取room_id
+        $room_id = isset($_SESSION['room_id']) ? $_SESSION['room_id'] : 0;
+        $room_name = isset($_SESSION['room']) ? $_SESSION['room'] : '';
+        
+        if ($room_id > 0) {
+            // 通过room_id查询winner_id
+            $stmt = mysqli_prepare($conn, "SELECT winner_id FROM tb_room WHERE id = ?");
+            mysqli_stmt_bind_param($stmt, 'i', $room_id);
+        } else if (!empty($room_name)) {
+            // 通过room名称查询winner_id
+            $stmt = mysqli_prepare($conn, "SELECT winner_id FROM tb_room WHERE name = ?");
+            mysqli_stmt_bind_param($stmt, 's', $room_name);
+        }
+        
+        if (isset($stmt)) {
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_bind_result($stmt, $winner_id);
+            mysqli_stmt_fetch($stmt);
+            mysqli_stmt_close($stmt);
+            
+            if (!empty($winner_id)) {
+                // 保存winner_id到session
+                $_SESSION['room']['winner'] = $winner_id;
+                
+                // 通过winner_id查询用户名
+                $stmt_user = mysqli_prepare($conn, "SELECT username FROM tb_user WHERE id = ?");
+                mysqli_stmt_bind_param($stmt_user, 'i', $winner_id);
+                mysqli_stmt_execute($stmt_user);
+                mysqli_stmt_bind_result($stmt_user, $winner_name);
+                mysqli_stmt_fetch($stmt_user);
+                mysqli_stmt_close($stmt_user);
+                
+                // 保存winner_name到session
+                $_SESSION['room']['winner_name'] = $winner_name;
+            }
+        }
+    }
+    
+    // 关闭数据库连接
+    mysqli_close($conn);
 
 ?>
 <!DOCTYPE html>
@@ -68,7 +124,7 @@
             letter-spacing:-0.35vw;
             text-shadow: 0.3vw 0.3vh #76ACFB
         ">
-            圣诞鹿
+            <?php echo isset($_SESSION['room']['winner_name']) ? $_SESSION['room']['winner_name'] : '获胜者'; ?>
         </div>
         <div id="word" style="
             position:absolute;
@@ -84,7 +140,7 @@
             -webkit-text-stroke: 2vw #f5e33f; /* 黄色描边 */
             z-index:1;
         ">
-            圣诞鹿
+            <?php echo isset($_SESSION['selected_word']) ? $_SESSION['selected_word'] : '词语'; ?>
         </div>
         <div id="word2" style="
             position:absolute;
@@ -99,7 +155,7 @@
             color: black;
             z-index:4;
         ">
-            圣诞鹿
+            <?php echo isset($_SESSION['selected_word']) ? $_SESSION['selected_word'] : '词语'; ?>
         </div>
         
 

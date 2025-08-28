@@ -53,43 +53,29 @@
         return rand(0, $max - 1);
     }
 
-    $index1 = getRandomInt($count);
-    do {
-        $index2 = getRandomInt($count);
-    } while ($index1 === $index2);
+    // 生成4个不同的随机索引数组
+    $indexes = [];
+    while (count($indexes) < 4) {
+        $randomIndex = getRandomInt($count);
+        if (!in_array($randomIndex, $indexes)) {
+            $indexes[] = $randomIndex;
+        }
+    }
 
-    do {
-        $index3 = getRandomInt($count);
-    } while ($index1 === $index3 || $index2===$index3);
-
-    do {
-        $index4 = getRandomInt($count);
-    } while ($index1 === $index4 || $index2 === $index4 || $index3 === $index4);
-
-    $sql = "SELECT word FROM tb_words LIMIT $index1, 1";
-    $result = mysqli_query($conn,$sql);
-    $row = mysqli_fetch_array($result);
-    $word1 = $row[0];
-    $sql = "SELECT word FROM tb_words LIMIT $index2, 1";
-    $result = mysqli_query($conn,$sql);
-    $row = mysqli_fetch_array($result);
-    $word2 = $row[0];
-
-    $sql = "SELECT word FROM tb_words LIMIT $index3, 1";
-    $result = mysqli_query($conn,$sql);
-    $row = mysqli_fetch_array($result);
-    $word3 = $row[0];
-
-    $sql = "SELECT word FROM tb_words LIMIT $index4, 1";
-    $result = mysqli_query($conn,$sql);
-    $row = mysqli_fetch_array($result);
-    $word4 = $row[0];
+    // 获取4个不同的随机单词数组
+    $words = [];
+    for ($i = 0; $i < 4; $i++) {
+        $sql = "SELECT word FROM tb_words LIMIT $indexes[$i], 1";
+        $result = mysqli_query($conn, $sql);
+        $row = mysqli_fetch_array($result);
+        $words[] = $row[0];
+    }
 
     mysqli_close($conn);
     
     // 记录选择的单词 - 只记录特定用户ID
     if (shouldLog($user_id)) {
-        Logger::info("随机选择的单词", ["user_id" => $user_id, "words" => [$word1, $word2, $word3, $word4]]);
+        Logger::info("随机选择的单词", ["user_id" => $user_id, "words" => $words, "index" => $indexes]);
     }
 ?>
 <!DOCTYPE html>
@@ -143,24 +129,24 @@
     <img src="./Choose2.svg"  style="position:absolute;left:2.5vw;top:-6.8vh;overflow:hidden;width:38%; z-index:0;filter: invert(100%);" /><!-- topleft-->
     <img src="./Choose1.svg"  style="position:absolute;left:71.8vw;top:70.8vh;width:28%;overflow:hidden;z-index:0;opacity: 1;" />  <!-- downright -->
     
-    <div id="wordDiv1" onclick="selectWord('<?php echo $word1; ?>', 1)" style="position:absolute;left:23vw;top:25vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
+    <div id="wordDiv1" onclick="selectWord('<?php echo $words[0]; ?>', 1)" style="position:absolute;left:23vw;top:25vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
         <img src="./choose5.svg" style="position:absolute;height:26vh;width:23vw;"/> 
-        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $word1; ?></p>
+        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $words[0]; ?></p>
     </div>
 
-    <div id="wordDiv2" onclick="selectWord('<?php echo $word2; ?>', 2)" style="position:absolute;left:56vw;top:25vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
+    <div id="wordDiv2" onclick="selectWord('<?php echo $words[1]; ?>', 2)" style="position:absolute;left:56vw;top:25vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
         <img src="./choose5.svg" style="position:absolute;height:26vh;width:23vw;"/> 
-        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $word2; ?></p>
+        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $words[1]; ?></p>
     </div>
 
-    <div id="wordDiv3" onclick="selectWord('<?php echo $word3; ?>', 3)" style="position:absolute;left:23vw;top:54vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
+    <div id="wordDiv3" onclick="selectWord('<?php echo $words[2]; ?>', 3)" style="position:absolute;left:23vw;top:54vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
         <img src="./choose5.svg" style="position:absolute;height:26vh;width:23vw;"/> 
-        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $word3; ?></p>
+        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $words[2]; ?></p>
     </div>
 
-    <div id="wordDiv4" onclick="selectWord('<?php echo $word4; ?>', 4)" style="position:absolute;left:56vw;top:54vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
+    <div id="wordDiv4" onclick="selectWord('<?php echo $words[3]; ?>', 4)" style="position:absolute;left:56vw;top:54vh;width:23vw;height:20vh;z-index:0;justify-content:center;align-items:center;cursor: pointer;">
         <img src="./choose5.svg" style="position:absolute;height:26vh;width:23vw;"/> 
-        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $word4; ?></p>
+        <p style="position:absolute;width:23vw;height:20vh;text-align:center;line-height:5vh;font-family: 'JiangXiZuoHei', sans-serif;white-space:nowrap;font-size:5vw;color:black;z-index:5;"><?php echo $words[3]; ?></p>
     </div>
     <script>
         // 全局变量 - 优先使用user_id作为主要标识
@@ -168,7 +154,7 @@
         var username = "<?php echo $username; ?>"; // 保留作为辅助显示
         var timer = 10;
         var timerInterval;
-        var selectedWord = "<?php echo $word1; ?>"; // 默认选择word1
+        var selectedWord = "<?php echo $words[0]; ?>"; // 默认选择第一个单词
         var isSelectionComplete = false;
         var room = "<?php echo $room; ?>";
         // 确保在JavaScript变量中包含room_id
@@ -217,29 +203,13 @@
                 console.log('[LOG] 用户选择单词:', { user_id: user_id, word: word, index: index });
             }
             
-            // 通过AJAX将选中的单词保存到SESSION
-            saveSelectedWordToSession(word);
-        }
-        
-        // 保存选中的单词到SESSION
-        function saveSelectedWordToSession(word) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'save_word_to_session.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    if (shouldLog) {
-                        console.log('[LOG] 单词已保存到SESSION: ' + word);
-                    }
-                }
-            };
-            xhr.send('selected_word=' + encodeURIComponent(word));
         }
         
         // 完成选择并检查猜测者状态
         function finalizeSelection() {
             isSelectionComplete = true;
-            
+            // 通过AJAX将选中的单词保存到SESSION
+            saveSelectedWordToSession(selectedWord);
             // 禁用所有单词选择
             for (var i = 1; i <= 4; i++) {
                 document.getElementById('wordDiv' + i).style.pointerEvents = 'none';
@@ -253,6 +223,21 @@
             
             // 等待猜测者跳转
             waitForGuessersAndSubmit();
+        }
+        
+        // 保存选中的单词到SESSION
+        function saveSelectedWordToSession(word, index) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'save_word_to_session.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    if (shouldLog) {
+                        console.log('[LOG] 单词已保存到SESSION: ' + word);
+                    }
+                }
+            };
+            xhr.send('selected_word=' + encodeURIComponent(word));
         }
         
         // 等待猜测者跳转并提交表单
