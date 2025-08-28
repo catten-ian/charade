@@ -58,8 +58,9 @@
         }
     </style>
     <title>Guess What It is</title>
-
     
+    <!-- 引入心跳活动检测器 -->
+    <script src="./activity-detector.js"></script>
 </head>
 <body bgcolor="#1270F8" style="overflow:hidden;">
 
@@ -111,7 +112,7 @@
             //      获得焦点时取消边框高亮
             //     this.style.outline = 'none';
             // });
-        debugger;
+        // debugger;
         // 从SESSION获取必要的数据
         <?php
             // 从会话中获取用户信息
@@ -306,7 +307,7 @@
                 
                 // 直接向check_answer.php发送POST请求，不跳转
                 var xhr = new XMLHttpRequest();
-                debugger;
+                // debugger;
                 xhr.open('POST', 'check_answer.php', true);
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 

@@ -33,11 +33,11 @@
         
         if ($room_id > 0) {
             // 通过room_id查询winner_id
-            $stmt = mysqli_prepare($conn, "SELECT winner_id FROM tb_room WHERE id = ?");
+            $stmt = mysqli_prepare($conn, "SELECT winner FROM tb_room WHERE id = ?");
             mysqli_stmt_bind_param($stmt, 'i', $room_id);
         } else if (!empty($room_name)) {
             // 通过room名称查询winner_id
-            $stmt = mysqli_prepare($conn, "SELECT winner_id FROM tb_room WHERE name = ?");
+            $stmt = mysqli_prepare($conn, "SELECT winner FROM tb_room WHERE name = ?");
             mysqli_stmt_bind_param($stmt, 's', $room_name);
         }
         
@@ -52,7 +52,7 @@
                 $_SESSION['room']['winner'] = $winner_id;
                 
                 // 通过winner_id查询用户名
-                $stmt_user = mysqli_prepare($conn, "SELECT username FROM tb_user WHERE id = ?");
+                $stmt_user = mysqli_prepare($conn, "SELECT name FROM tb_user WHERE id = ?");
                 mysqli_stmt_bind_param($stmt_user, 'i', $winner_id);
                 mysqli_stmt_execute($stmt_user);
                 mysqli_stmt_bind_result($stmt_user, $winner_name);
@@ -104,6 +104,9 @@
         }
     </style>
     <title>Round End</title>
+    
+    <!-- 引入心跳活动检测器 -->
+    <script src="./activity-detector.js"></script>
 </head>
 <body bgcolor="#1270F8" style="overflow:hidden;">
 
@@ -196,8 +199,8 @@
                 clearInterval(timer1);
                 console.log("跳转至休息页面");
                 
-                // 跳转到rest.php，传递room和room_id参数
-                window.location.href = 'rest.php?room=' + encodeURIComponent(room) + '&room_id=' + encodeURIComponent(room_id);
+                // 跳转到rest.php，不传递参数
+                window.location.href = 'rest.php';
             }
         }
     </script>

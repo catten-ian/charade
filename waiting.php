@@ -34,6 +34,10 @@
         }
     </style>
     <link rel="stylesheet" href="styles2.css">
+    
+    <!-- 引入心跳活动检测器 -->
+    <script src="./activity-detector.js"></script>
+    
     <title>Waiting</title>
 </head>
 <body bgcolor="#1270F8" style="overflow:hidden;" monica-id="ofpnmcalabcbjgholdjcjblkibolbppb" monica-version="7.9.7">

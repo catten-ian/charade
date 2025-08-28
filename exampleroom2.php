@@ -55,6 +55,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Charades!</title>
     <link rel="stylesheet" href="styles2.css">
+    
+    <!-- 引入心跳活动检测器 -->
+    <script src="./activity-detector.js"></script>
     <script type="text/javascript">
         function updateArcText(text, txtId, pathId, left_offset, top_offset) {
             const textElement = document.getElementById(txtId);

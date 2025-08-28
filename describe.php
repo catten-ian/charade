@@ -121,8 +121,9 @@
         }
     </style>
     <title>Describe The Word</title>
-
     
+    <!-- 引入心跳活动检测器 -->
+    <script src="./activity-detector.js"></script>
 </head>
 <body bgcolor="#1270F8" style="overflow:hidden;">
 

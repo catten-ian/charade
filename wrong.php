@@ -40,6 +40,9 @@
         }
     </style>
     <title>No One Wins</title>
+    
+    <!-- 引入心跳活动检测器 -->
+    <script src="./activity-detector.js"></script>
 </head>
 <body bgcolor="#1270F8" style="overflow:hidden;">
 
@@ -96,8 +99,8 @@
             // 优先使用user_id作为主要标识，username保留作为辅助显示
     $user_id = $_SESSION['user_id'];
     $username=$_SESSION['username'];
-    $room = $_SESSION['room'];
-    $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0;
+    $room = $_SESSION['room']['name'];
+    $room_id = isset($_SESSION['room']['id']) ? (int)$_SESSION['room']['id'] : 0;
     
     
     // 优先声明user_id，username保留作为辅助显示

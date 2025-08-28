@@ -17,6 +17,31 @@
         return isset($_SESSION['user_id']) && in_array($_SESSION['user_id'], $log_user_ids);
     }
     
+    // 记录REST活动日志
+    function logRestActivity($activity, $details = []) {
+        if (shouldLog()) {
+            global $_SESSION;
+            $user_id = $_SESSION['user_id'];
+            $username = $_SESSION['username'];
+            $room_id = isset($_SESSION['room']["id"]) ? $_SESSION['room']["id"] : 0;
+            $room_name = isset($_SESSION['room']["name"]) ? $_SESSION['room']["name"] : '';
+            $role = $_SESSION['role'];
+            
+            // 添加用户上下文信息到details数组
+            $context = array_merge([
+                'user_id' => $user_id,
+                'username' => $username,
+                'role' => $role,
+                'room_id' => $room_id,
+                'room_name' => $room_name
+            ], $details);
+            
+            Logger::info("[REST] " . $activity, $context);
+        }
+    }
+    
+
+    
     // 连接数据库
     $conn = mysqli_connect('localhost', $db_user, $db_password, $db_name, $db_port);
     
@@ -26,7 +51,10 @@
     }
     
     // 从SESSION获取room_id
-    $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0;
+    $room_id = isset($_SESSION['room']["id"]) ? (int)$_SESSION['room']["id"] : 0;
+    
+    // 记录页面访问日志
+    logRestActivity("Page accessed");
     
     // 从数据库获取当前轮数
     $current_round = 0;
@@ -38,6 +66,9 @@
         $stmt->bind_result($current_round);
         $stmt->fetch();
         $stmt->close();
+        
+        // 记录获取到的当前轮次
+        logRestActivity("Got current round", ["round" => $current_round]);
     }
     
     // 关闭数据库连接
@@ -51,6 +82,9 @@
     <!-- 预加载关键图片，减少加载延迟 -->
     <link rel="preload" href="./loading.png" as="image" type="image/png">
     <link rel="preload" href="./example9.png" as="image" type="image/png">
+    
+    <!-- 引入心跳活动检测器 -->
+    <script src="./activity-detector.js"></script>
     
     <style>
         /* 字体声明保持不变 */
@@ -185,13 +219,23 @@
         var startTimeInMs = timeObj.getTime();
         var Count1 = 0;
         var window_width = window.innerWidth;
+        
+        // 记录JavaScript部分日志的函数 - 直接输出到控制台
+        function logFromJS(activity, details = {}) {
+            var logMessage = "[REST] " + activity;
+            if (Object.keys(details).length > 0) {
+                logMessage += " - " + JSON.stringify(details);
+            }
+            console.log(logMessage);
+        }
+        
         timer1 = setInterval(checkUserCount, 1000);    
         <?php 
             // 从SESSION中获取数据
             $user_id = $_SESSION['user_id'];
             $username = $_SESSION['username'];
-            $room = isset($_SESSION['room']) ? $_SESSION['room'] : '';
-            $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0;
+            $room = isset($_SESSION['room']["name"]) ? $_SESSION['room']["name"] : '';
+            $room_id = isset($_SESSION['room']["id"]) ? (int)$_SESSION['room']["id"] : 0;
             $role = $_SESSION['role'];
             
             // 从PHP传递当前轮数到JavaScript
@@ -216,12 +260,18 @@
                 clearInterval(timer1);
                 console.log("跳转至下一轮游戏");
                 
+                // 记录倒计时结束
+                logFromJS("Countdown ended", {"rest_time_completed": true});
+                
                 // 使用从数据库获取的轮次计数
                 var roundCount = current_round;
                 
                 // 检查是否达到4轮
                 if (roundCount >= 4) {
                     console.log("已完成4轮游戏，跳转到结束页面");
+                    // 记录结束游戏
+                    logFromJS("Game completed", {"all_rounds_finished": true, "total_rounds": 4});
+                    
                     const endUrlParams = new URLSearchParams();
                     endUrlParams.append('room', room);
                     endUrlParams.append('room_id', room_id);
@@ -256,6 +306,9 @@
                     newRole = isDescriber ? 'describer' : 'guesser';
                 }
                 
+                // 记录角色更新
+                logFromJS("Role updated", {"new_role": newRole});
+                
                 // 不在这里保存轮次计数，由C++程序处理
                 localStorage.setItem('currentRole', newRole);
                 
@@ -268,13 +321,19 @@
                 // 可以根据需要处理响应
                 if (roleXhr.status === 200) {
                     console.log("角色更新成功: " + roleXhr.responseText);
+                    // 记录角色更新成功
+                    logFromJS("Role update successful", {"user_id": user_id, "new_role": newRole});
                 } else {
                     console.error("角色更新失败");
+                    // 记录角色更新失败
+                    logFromJS("Role update failed", {"user_id": user_id, "new_role": newRole});
                 }
                 
                 // 如果未完成4轮游戏，调用C++程序重置房间状态和增加轮数
                 if (roundCount < 4) {
                     console.log("调用C++程序重置房间状态和增加轮数");
+                    // 记录房间重置请求
+                    logFromJS("Room reset requested", {"round": roundCount, "room_id": room_id});
                     
                     // 发送AJAX请求调用C++程序
                     var xhr = new XMLHttpRequest();
@@ -284,12 +343,17 @@
                     // 可以根据需要处理响应
                     if (xhr.status === 200) {
                         console.log("C++程序调用成功: " + xhr.responseText);
+                        // 记录房间重置成功
+                        logFromJS("Room reset completed", {"round": roundCount, "room_id": room_id, "response": xhr.responseText});
                     } else {
                         console.error("C++程序调用失败");
+                        // 记录房间重置失败
+                        logFromJS("Room reset failed", {"round": roundCount, "room_id": room_id, "status": xhr.status});
                     }
                 }
                 
-                // 跳转到目标页面
+                // 记录页面跳转
+                logFromJS("Page navigation", {"from": "rest.php", "to": targetPage, "round": roundCount});
                 window.location.href = targetPage;
             }
         }
