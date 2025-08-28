@@ -18,7 +18,64 @@ struct DBConfig {
 	unsigned int port;
 };
 
-// 读取INI配置文件函数
+// 读取PHP格式配置文件函数
+std::map<std::string, std::string> readPHPConfigFile(const std::string& filename) {
+	std::map<std::string, std::string> config;
+	std::ifstream file(filename);
+
+	if (!file.is_open()) {
+		std::cerr << "无法打开配置文件: " << filename << std::endl;
+		return config;
+	}
+
+	std::string line;
+	while (std::getline(file, line)) {
+		// 跳过注释、空行和PHP标签
+		if (line.empty() || line[0] == '#' || line[0] == '/' || line.find("<?php") != std::string::npos || line.find("?>") != std::string::npos) {
+			continue;
+		}
+
+		// 解析变量定义
+		size_t pos = line.find('=');
+		if (pos != std::string::npos && line.find('$') != std::string::npos) {
+			// 提取变量名（去掉$符号）
+			size_t varStart = line.find('$');
+			if (varStart != std::string::npos) {
+				size_t varEnd = line.find_first_of(" =;", varStart + 1);
+				if (varEnd != std::string::npos) {
+					std::string key = line.substr(varStart + 1, varEnd - varStart - 1);
+					
+					// 提取变量值（去掉引号和分号）
+					size_t valueStart = line.find_first_of("'\"", pos + 1);
+					size_t valueEnd = std::string::npos;
+					if (valueStart != std::string::npos) {
+						char quote = line[valueStart];
+						valueEnd = line.find(quote, valueStart + 1);
+						if (valueEnd != std::string::npos) {
+							std::string value = line.substr(valueStart + 1, valueEnd - valueStart - 1);
+							config[key] = value;
+						}
+					} else {
+						// 处理没有引号的数字值
+						size_t endPos = line.find(';', pos + 1);
+						if (endPos != std::string::npos) {
+							std::string value = line.substr(pos + 1, endPos - pos - 1);
+							// 去除空格
+							value.erase(0, value.find_first_not_of(" \t"));
+							value.erase(value.find_last_not_of(" \t") + 1);
+							config[key] = value;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	file.close();
+	return config;
+}
+
+// 读取INI配置文件函数（保留用于兼容性）
 std::map<std::string, std::map<std::string, std::string>> readConfigFile(const std::string& filename) {
 	std::map<std::string, std::map<std::string, std::string>> config;
 	std::string currentSection;
@@ -68,28 +125,39 @@ struct AppConfig {
 	int type2_seconds;  // 60分钟未响应设为type=2
 };
 
-// 从配置文件获取数据库配置
+// 从PHP配置文件获取数据库配置
 DBConfig getDBConfig() {
 	DBConfig config;
 	
-	// 先尝试从配置文件读取
-	auto configMap = readConfigFile("db_config.ini");
-	if (configMap.count("database")) {
-		auto& dbSection = configMap["database"];
-		
-		config.host = dbSection.count("host") ? dbSection["host"] : "localhost";
-		config.user = dbSection.count("user") ? dbSection["user"] : "charade";
-		config.password = dbSection.count("password") ? dbSection["password"] : "pwdtest1";
-		config.database = dbSection.count("database") ? dbSection["database"] : "chdb";
-		config.port = dbSection.count("port") ? std::stoi(dbSection["port"]) : 3307;
+	// 先尝试从PHP配置文件读取
+	auto configMap = readPHPConfigFile("../config.inc");
+	if (!configMap.empty()) {
+		config.host = configMap.count("db_host") ? configMap["db_host"] : (configMap.count("db_server") ? configMap["db_server"] : "localhost");
+		config.user = configMap.count("db_user") ? configMap["db_user"] : "charade";
+		config.password = configMap.count("db_password") ? configMap["db_password"] : "pwdtest1";
+		config.database = configMap.count("db_name") ? configMap["db_name"] : (configMap.count("db_database") ? configMap["db_database"] : "chdb");
+		config.port = configMap.count("db_port") ? std::stoi(configMap["db_port"]) : 3307;
 	} else {
-		// 配置文件不存在或格式错误时，使用环境变量或默认值
-		std::cout << "配置文件不存在或格式错误，尝试使用环境变量或默认值" << std::endl;
-		config.host = getenv("DB_HOST") ? getenv("DB_HOST") : "localhost";
-		config.user = getenv("DB_USER") ? getenv("DB_USER") : "charade";
-		config.password = getenv("DB_PASSWORD") ? getenv("DB_PASSWORD") : "pwdtest1";
-		config.database = getenv("DB_NAME") ? getenv("DB_NAME") : "chdb";
-		config.port = getenv("DB_PORT") ? stoi(getenv("DB_PORT")) : 3307;
+		// 如果PHP配置文件读取失败，回退到INI文件
+		std::cout << "PHP配置文件读取失败，尝试读取INI配置文件" << std::endl;
+		auto configMapIni = readConfigFile("db_config.ini");
+		if (configMapIni.count("database")) {
+			auto& dbSection = configMapIni["database"];
+			
+			config.host = dbSection.count("host") ? dbSection["host"] : "localhost";
+			config.user = dbSection.count("user") ? dbSection["user"] : "charade";
+			config.password = dbSection.count("password") ? dbSection["password"] : "pwdtest1";
+			config.database = dbSection.count("database") ? dbSection["database"] : "chdb";
+			config.port = dbSection.count("port") ? std::stoi(dbSection["port"]) : 3307;
+		} else {
+			// 配置文件不存在或格式错误时，使用环境变量或默认值
+			std::cout << "配置文件不存在或格式错误，尝试使用环境变量或默认值" << std::endl;
+			config.host = getenv("DB_HOST") ? getenv("DB_HOST") : "localhost";
+			config.user = getenv("DB_USER") ? getenv("DB_USER") : "charade";
+			config.password = getenv("DB_PASSWORD") ? getenv("DB_PASSWORD") : "pwdtest1";
+			config.database = getenv("DB_NAME") ? getenv("DB_NAME") : "chdb";
+			config.port = getenv("DB_PORT") ? stoi(getenv("DB_PORT")) : 3307;
+		}
 	}
 	
 	return config;
@@ -99,17 +167,25 @@ DBConfig getDBConfig() {
 AppConfig getAppConfig() {
 	AppConfig config;
 	
-	// 先尝试从配置文件读取
-	auto configMap = readConfigFile("db_config.ini");
-	if (configMap.count("app")) {
-		auto& appSection = configMap["app"];
-		
-		config.type5_seconds = appSection.count("type5_seconds") ? std::stoi(appSection["type5_seconds"]) : 180;
-		config.type2_seconds = appSection.count("type2_seconds") ? std::stoi(appSection["type2_seconds"]) : 3600;
+	// 先尝试从PHP配置文件读取（根据search_codebase结果，应用配置在config.app.inc中）
+	auto appConfigMap = readPHPConfigFile("config.app.inc");
+	if (!appConfigMap.empty() && appConfigMap.count("status_threshold")) {
+		// PHP数组配置的简单解析（实际可能需要更复杂的解析逻辑）
+		config.type5_seconds = 180;   // 默认值：3分钟 = 180秒
+		config.type2_seconds = 3600;  // 默认值：60分钟 = 3600秒
 	} else {
-		// 配置文件不存在或格式错误时，使用默认值
-		config.type5_seconds = 180;   // 3分钟 = 180秒
-		config.type2_seconds = 3600;  // 60分钟 = 3600秒
+		// 回退到INI文件
+		auto configMap = readConfigFile("db_config.ini");
+		if (configMap.count("app")) {
+			auto& appSection = configMap["app"];
+			
+			config.type5_seconds = appSection.count("type5_seconds") ? std::stoi(appSection["type5_seconds"]) : 180;
+			config.type2_seconds = appSection.count("type2_seconds") ? std::stoi(appSection["type2_seconds"]) : 3600;
+		} else {
+			// 配置文件不存在或格式错误时，使用默认值
+			config.type5_seconds = 180;   // 3分钟 = 180秒
+			config.type2_seconds = 3600;  // 60分钟 = 3600秒
+		}
 	}
 	
 	return config;

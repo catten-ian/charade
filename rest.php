@@ -1,6 +1,47 @@
 <?php
     // Start the session
     session_start();
+    
+    // 包含数据库配置
+    include '../config.inc';
+    
+    // 包含日志功能
+    include 'log.php';
+        
+    // 定义应该记录日志的用户ID列表
+    $log_user_ids = [8, 14];
+    
+    // 检查是否应该记录日志
+    function shouldLog() {
+        global $log_user_ids, $_SESSION;
+        return isset($_SESSION['user_id']) && in_array($_SESSION['user_id'], $log_user_ids);
+    }
+    
+    // 连接数据库
+    $conn = mysqli_connect('localhost', $db_user, $db_password, $db_name, $db_port);
+    
+    // 检查连接
+    if ($conn->connect_error) {
+        die("连接失败: " . $conn->connect_error);
+    }
+    
+    // 从SESSION获取room_id
+    $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0;
+    
+    // 从数据库获取当前轮数
+    $current_round = 0;
+    if ($room_id > 0) {
+        $sql = "SELECT round FROM tb_room WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $room_id);
+        $stmt->execute();
+        $stmt->bind_result($current_round);
+        $stmt->fetch();
+        $stmt->close();
+    }
+    
+    // 关闭数据库连接
+    $conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -153,24 +194,17 @@
             $room_id = isset($_SESSION['room_id']) ? (int)$_SESSION['room_id'] : 0;
             $role = $_SESSION['role'];
             
-            // 优先从房间成员列表中获取第一个用户信息
-            $first_user_id = '';
-            $first_user_name = '';
-            if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
-                $first_user_id = $_SESSION['room']['members'][0]['id'];
-                $first_user_name = $_SESSION['room']['members'][0]['name'];
-            }
-            
-            // 保存first_user_id到SESSION
-            $_SESSION['first_user_id'] = $first_user_id;
+            // 从PHP传递当前轮数到JavaScript
+            print("var current_round = $current_round;\n");
             
             // 优先声明user_id，username保留作为辅助显示
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
             print("var room_id = $room_id;\n");
-            print("var first_user_id = $first_user_id;\n");
             print("var role = '$role';\n");
+            // 用于角色计算的变量
+            print("var isDescriber = (role == 'describer');\n");
         ?>
         function checkUserCount() {
             console.log("Checking user count");
@@ -182,9 +216,8 @@
                 clearInterval(timer1);
                 console.log("跳转至下一轮游戏");
                 
-                // 获取当前轮次计数（初始为0）
-                var roundCount = parseInt(localStorage.getItem('roundCount') || '0');
-                roundCount++;
+                // 使用从数据库获取的轮次计数
+                var roundCount = current_round;
                 
                 // 检查是否达到4轮
                 if (roundCount >= 4) {
@@ -196,20 +229,19 @@
                     return;
                 }
                 
-                // 保存更新后的轮次计数
-                localStorage.setItem('roundCount', roundCount.toString());
+                // 不在这里更新轮次计数，由C++程序处理
                 
                 // 角色交换逻辑：根据用户ID和first_user_id决定当前角色
-                var isFirstUser = (user_id == first_user_id);
+                var isDescriber = (role == 'describer');
                 var targetPage = '';
                 
                 // 如果是偶数轮（从1开始计数），角色保持不变；如果是奇数轮，角色交换
                 if (roundCount % 2 == 0) {
                     // 偶数轮，角色交换
-                    targetPage = isFirstUser ? 'waiting.php' : 'choose.php';
+                    targetPage = isDescriber ? 'waiting.php' : 'choose.php';
                 } else {
                     // 奇数轮，角色保持不变
-                    targetPage = isFirstUser ? 'choose.php' : 'waiting.php';
+                    targetPage = isDescriber ? 'choose.php' : 'waiting.php';
                 }
                 
                 console.log("轮次: " + roundCount + "，目标页面: " + targetPage);
@@ -218,17 +250,46 @@
                 var newRole = '';
                 if (roundCount % 2 == 0) {
                     // 偶数轮，角色交换
-                    newRole = isFirstUser ? 'guesser' : 'chooser';
+                    newRole = isDescriber ? 'guesser' : 'describer';
                 } else {
                     // 奇数轮，角色保持不变
-                    newRole = isFirstUser ? 'chooser' : 'guesser';
+                    newRole = isDescriber ? 'describer' : 'guesser';
                 }
                 
-                // 保存轮次计数和新角色到localStorage
-                localStorage.setItem('roundCount', roundCount.toString());
+                // 不在这里保存轮次计数，由C++程序处理
                 localStorage.setItem('currentRole', newRole);
                 
-                // 直接跳转到目标页面，依赖SESSION传递数据
+                // 将新角色保存到tb_user表中
+                console.log("保存新角色到数据库: " + newRole);
+                var roleXhr = new XMLHttpRequest();
+                roleXhr.open('GET', 'update_user_role.php?user_id=' + user_id + '&new_role=' + newRole, false); // 同步请求
+                roleXhr.send();
+                
+                // 可以根据需要处理响应
+                if (roleXhr.status === 200) {
+                    console.log("角色更新成功: " + roleXhr.responseText);
+                } else {
+                    console.error("角色更新失败");
+                }
+                
+                // 如果未完成4轮游戏，调用C++程序重置房间状态和增加轮数
+                if (roundCount < 4) {
+                    console.log("调用C++程序重置房间状态和增加轮数");
+                    
+                    // 发送AJAX请求调用C++程序
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', 'reset_room.php?room_id=' + room_id, false); // 同步请求，确保在跳转前完成
+                    xhr.send();
+                    
+                    // 可以根据需要处理响应
+                    if (xhr.status === 200) {
+                        console.log("C++程序调用成功: " + xhr.responseText);
+                    } else {
+                        console.error("C++程序调用失败");
+                    }
+                }
+                
+                // 跳转到目标页面
                 window.location.href = targetPage;
             }
         }

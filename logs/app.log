@@ -208,3 +208,46 @@
 [2025-08-28 12:24:40] [DEBUG] [127.0.0.1] [catten] 检查猜测者状态 {"user_id":8,"username":"catten","room":"room3","room_id":3,"status":{"allReady":true}}
 [2025-08-28 12:24:42] [DEBUG] [127.0.0.1] [catten] 用户活动记录 {"user_id":8,"username":"catten","room_id":3,"elapsed_seconds":180}
 [2025-08-28 12:24:42] [INFO] [127.0.0.1] [catten] 游戏超时 {"user_id":8,"username":"catten","room":"room3","room_id":3}
+[2025-08-28 13:20:44] [DEBUG] [127.0.0.1] [catten] username data: "catten"
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 进入匹配页面 {"username":"catten","user_id":"8"}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 数据库连接成功 {"user_id":"8"}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 开始匹配流程 {"username":"catten","user_id":"8"}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 用户名转义完成 {"username":"catten","user_id":"8"}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 用户已存在 {"username":"catten","user_id":"8"}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 获取用户ID成功 {"username":"catten","user_id":"8"}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 检查用户房间状态 {"user_id":"8"}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 查询用户所在房间 {"user_id":"8","sql":"SELECT id,name, user_cnt, user_id0,user_id1 from tb_room WHERE user_id0=8 or user_id1=8 order by user_cnt DESC"}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 房间查询结果 {"user_id":"8","room_count":1}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 用户已在房间中 {"user_id":"8","room_name":"room3","room_status":2}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 更新用户房间状态成功 {"user_id":"8","in_room":1}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 处理成员索引 {"user_id":"8","index":3}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 处理成员索引 {"user_id":"8","index":4}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 处理成员索引 {"user_id":"8","index":17}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 处理成员索引 {"user_id":"8","index":18}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 处理成员索引 {"user_id":"8","index":19}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 处理成员索引 {"user_id":"8","index":20}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 处理成员索引 {"user_id":"8","index":21}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 处理成员索引 {"user_id":"8","index":22}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 处理成员索引 {"user_id":"8","index":23}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 处理成员索引 {"user_id":"8","index":24}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 找到空房间 {"user_id":"8","room_name":{"name":"room3","id":"3","user_cnt":"2","type":null,"word_type":null,"level_type":null,"max_people":null,"least_people":null,"personal_try":null,"team_try":null,"match_random":null,"vocab_custom_count":null,"vocab_custom":null,"winner":null,"word_id":null,"members":[{"id":"8","name":"catten","score":0,"role":0},{"id":"14","name":"anonymous","score":0,"role":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0}],"status":null,"round":null},"room_id":"3"}
+[2025-08-28 13:20:44] [DEBUG] [127.0.0.1] [catten] 房间已满员 {"user_id":"8","room_name":{"name":"room3","id":"3","user_cnt":"2","type":null,"word_type":null,"level_type":null,"max_people":null,"least_people":null,"personal_try":null,"team_try":null,"match_random":null,"vocab_custom_count":null,"vocab_custom":null,"winner":null,"word_id":null,"members":[{"id":"8","name":"catten","score":0,"role":0},{"id":"14","name":"anonymous","score":0,"role":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0},{"id":null,"name":null,"score":0}],"status":null,"round":null},"room_id":"3","room_user_names":["catten","anonymous"]}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 匹配成功 {"user_id":"8","room_id":"3","room_name":"room3","room_user_ids":["8","14"]}
+[2025-08-28 13:20:44] [INFO] [127.0.0.1] [catten] 用户进入房间页面 {"username":"catten","user_id":"8","room":"room3","room_id":"3"}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 接收到角色分配请求 {"user_id":8,"room_id":3}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 数据库连接成功 {"user_id":8,"room_id":3}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 检查用户房间归属 {"user_id":8,"room_id":3,"sql":"SELECT COUNT(*) as count FROM tb_room WHERE id = ? AND FIND_IN_SET(?, CONCAT_WS(',', user_id0, user_id1, user_id2, user_id3, user_id4, user_id5, user_id6, user_id7, user_id8, user_id9))"}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 用户房间归属检查结果 {"user_id":8,"room_id":3,"count":1}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 准备重置用户角色为0 {"user_id":8,"room_id":3,"sql":"UPDATE tb_user SET role = 0 WHERE id = ?"}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 用户角色重置为0成功 {"user_id":8,"room_id":3}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 查询房间内已有角色分配 {"user_id":8,"room_id":3,"sql":"SELECT u.role FROM tb_user u JOIN tb_room r ON FIND_IN_SET(u.id, CONCAT_WS(',', r.user_id0, r.user_id1, r.user_id2, r.user_id3, r.user_id4, r.user_id5, r.user_id6, r.user_id7, r.user_id8, r.user_id9)) WHERE r.id = ? AND u.role IN (1, 2)"}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 房间角色统计 {"user_id":8,"room_id":3,"describer_count":1,"guesser_count":0}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 角色分配决策 {"user_id":8,"room_id":3,"assigned_role":2}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 准备更新用户角色 {"user_id":8,"room_id":3,"sql":"UPDATE tb_user SET role = ? WHERE id = ?"}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 用户角色更新成功 {"user_id":8,"room_id":3,"assigned_role":2}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 事务提交成功 {"user_id":8,"room_id":3}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [anonymous] 角色分配完成 {"user_id":8,"room_id":3,"role":"guesser"}
+[2025-08-28 13:20:49] [INFO] [127.0.0.1] [catten] 用户进入start页面 {"user_id":"8","username":"catten","room":"room3","room_id":"3","role":"guesser"}
+[2025-08-28 13:20:59] [INFO] [127.0.0.1] [catten] 用户进入猜测页面 {"user_id":"8","username":"catten","room_id":"3"}
+[2025-08-28 13:21:36] [DEBUG] [127.0.0.1] [catten] 用户活动记录 {"user_id":8,"username":"catten","room_id":3,"elapsed_seconds":30}
+[2025-08-28 13:22:06] [DEBUG] [127.0.0.1] [catten] 用户活动记录 {"user_id":8,"username":"catten","room_id":3,"elapsed_seconds":60}

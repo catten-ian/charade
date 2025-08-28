@@ -200,7 +200,8 @@ if ($room_cnt >= 1) {
                 'winner' => $row[15],
                 'word_id' => $row[16],
                 'members' => $members,
-                'status' => $row[25]
+                'status' => $row[25],
+                'round' => $row[26],
             ];
             // 只记录特定用户ID的日志
             if (shouldLog($user_id)) {
@@ -362,7 +363,8 @@ if (shouldLog($user_id)) {
                 'winner' => $row[15],
                 'word_id' => $row[16],
                 'members' => $members,
-                'status' => $row[25]
+                'status' => $row[25],
+                'round' => $row[26]
             ];
             // 只记录特定用户ID的日志
             if (shouldLog($user_id)) {

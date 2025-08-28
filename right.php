@@ -3,14 +3,22 @@
     session_start();
 
     // 包含数据库配置
-    $config = parse_ini_file('db_config.ini', true);
-    $db_host = $config['database']['host'];
-    $db_user = $config['database']['username'];
-    $db_pass = $config['database']['password'];
-    $db_name = $config['database']['dbname'];
+    include '../config.inc';
+    
+    // 包含日志功能
+    include 'log.php';
+        
+    // 定义应该记录日志的用户ID列表
+    $log_user_ids = [8, 14];
+    
+    // 检查是否应该记录日志
+    function shouldLog() {
+        global $log_user_ids, $_SESSION;
+        return isset($_SESSION['user_id']) && in_array($_SESSION['user_id'], $log_user_ids);
+    }
     
     // 连接数据库
-    $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+    $conn = mysqli_connect('localhost', $db_user, $db_password, $db_name, $db_port);
     
     // 检查连接
     if (!$conn) {
@@ -20,8 +28,8 @@
     // 获取获胜者名称逻辑
     if (!isset($_SESSION['room']['winner_name'])) {
         // 获取room_id
-        $room_id = isset($_SESSION['room_id']) ? $_SESSION['room_id'] : 0;
-        $room_name = isset($_SESSION['room']) ? $_SESSION['room'] : '';
+        $room_id = isset($_SESSION['room']["id"]) ? $_SESSION['room']["id"] : 0;
+        $room_name = isset($_SESSION['room']["name"]) ? $_SESSION['room']["name"] : '';
         
         if ($room_id > 0) {
             // 通过room_id查询winner_id
@@ -169,24 +177,14 @@
         <?php 
             $user_id = $_SESSION['user_id'];
             $username=$_SESSION['username'];
-            $room = $_SESSION['room'];
+            $room = $_SESSION['room']['name'];
             // 确保room_id已设置
-            $room_id = isset($_SESSION['room_id']) ? $_SESSION['room_id'] : '';
-            $first_user_id = $_SESSION['first_user_id'];
-            
-            // 优先从房间成员列表中获取第一个用户信息
-            $first_user_name = '';
-            if (isset($_SESSION['room']['members']) && !empty($_SESSION['room']['members'])) {
-                $first_user_id = $_SESSION['room']['members'][0]['id'];
-                $first_user_name = $_SESSION['room']['members'][0]['name'];
-            }
+            $room_id = isset($_SESSION['room']["id"]) ? $_SESSION['room']["id"] : '';
             
             print("var user_id=$user_id;\n");
             print("var username='$username'; // 保留作为辅助显示\n");
             print("var room = '$room';\n");
             print("var room_id = '$room_id';\n");
-            print("var first_user_id = $first_user_id;\n");
-            print("var first_user_name = '$first_user_name';\n");
         ?>
         function checkUserCount() {
             console.log("Checking user count");
