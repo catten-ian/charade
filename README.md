@@ -19,5 +19,7 @@ room status 值	含义
 3	已结束
 4	已关闭
 
+paring.php ret_code:0 pairing success, 1 pairing failed, 2 already paired, 3 already in room, 4 room full, 5 room not found, 6 room not public
+
 # 每分钟执行一次状态更新
 * * * * * /usr/bin/php /path/to/charade/cron/update_user_status.php

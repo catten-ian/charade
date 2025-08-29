@@ -466,7 +466,6 @@ int main() {
 	MYSQL* conn = initDBConnection(dbConfig);
 	if (!conn) {
 		cerr << "Failed to connect to database, press any key to continue..." << endl;
-		system("pause");
 		return 1;
 	}
 
@@ -488,8 +487,7 @@ int main() {
 	mysql_close(conn);
 
 	// Add pause so user can see the output
-	// cerr << "Press any key to continue..." << endl;
-	// system("pause");
+	cerr << "Press any key to continue..." << endl;
 
 	return (success && roomStatusFixed) ? 0 : 1;
 }

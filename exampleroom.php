@@ -6,13 +6,6 @@
     if (isset($_POST['username'])) {
         $_SESSION['username'] = $_POST['username']; // 保留作为辅助显示
     }
-    // 只有从login送来的或者type为3或4的用户才将其type更新为1
-    if (isset($_POST['from_login']) || (isset($_SESSION['type']) && (($_SESSION['type'] == '3') || ($_SESSION['type'] == '4')))) {
-        $_SESSION['type'] = '1';
-    } else if (isset($_POST['type'])) {
-        // 保留从POST传入的type值
-        $_SESSION['type'] = $_POST['type'];
-    }
 
     include "../config.inc";
 
@@ -44,6 +37,19 @@
         $user_id = $row['id'];
     }
     
+    // 只有从login送来的或者type为3或4的用户才将其type更新为1
+    if (isset($_POST['from_login']) || (isset($_SESSION['type']) && (($_SESSION['type'] == '3') || ($_SESSION['type'] == '4')))) {
+        $_SESSION['type'] = '1';
+        $stmt = mysqli_prepare($conn, "UPDATE tb_user SET last_active_time=NOW(), type = 1 WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'i', $user_id);
+        mysqli_stmt_execute($stmt);
+    } else if (isset($_POST['type'])) {
+        // 保留从POST传入的type值
+        $_SESSION['type'] = $_POST['type'];
+        $stmt = mysqli_prepare($conn, "UPDATE tb_user SET type = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'ii', $_POST['type'], $user_id);
+        mysqli_stmt_execute($stmt);
+    }
     // 重置用户分数
     $stmt = mysqli_prepare($conn, "UPDATE tb_user SET score = 0 WHERE id = ?");
     mysqli_stmt_bind_param($stmt, 'i', $user_id);
@@ -228,7 +234,7 @@
                 }
             }
         }
-        timer1=setInterval(checkUserStatus,2000);        
+        timer1=setInterval(checkUserStatus,1000);        
         /*
         function checkUserCount()
         {

@@ -1,31 +1,31 @@
 @echo off
-REM 设置MariaDB的头文件和库文件路径
+REM Set MariaDB header and library paths
 set MARIADB_INCLUDE=E:\software\wampsever\bin\mariadb\mariadb11.3.2\include
 set MARIADB_LIB=E:\software\wampsever\bin\mariadb\mariadb11.3.2\lib
 
-REM 设置PATH环境变量，确保程序能找到MariaDB的DLL文件
-echo 设置环境变量...
+REM Set PATH environment variable to ensure the program can find MariaDB DLL files
+echo Setting environment variables...
 set PATH=%MARIADB_LIB%;%PATH%
 
-REM 编译程序
-echo 使用MariaDB库编译UserStatusUpdater.cpp...
+REM Compile the program
+echo Compiling UserStatusUpdater.cpp with MariaDB libraries...
 g++ UserStatusUpdater.cpp -o user_status_updater.exe -I%MARIADB_INCLUDE% -L%MARIADB_LIB% -lmysql
 
-REM 检查编译是否成功
+REM Check if compilation succeeded
 if %ERRORLEVEL% NEQ 0 (
-    echo 编译失败！错误码: %ERRORLEVEL%
+    echo Compilation failed! Error code: %ERRORLEVEL%
     pause
     exit /b %ERRORLEVEL%
 )
 
-echo 编译成功！
+echo Compilation successful!
 
-REM 运行程序
-echo 运行user_status_updater.exe...
+REM Run the program
+echo Running user_status_updater.exe...
 user_status_updater.exe
 
-REM 显示程序退出代码
-echo 程序退出代码: %ERRORLEVEL%
+REM Display program exit code
+echo Program exit code: %ERRORLEVEL%
 
-REM 暂停以便查看输出
+REM Pause to view output
 pause
